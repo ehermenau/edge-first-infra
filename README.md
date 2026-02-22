@@ -73,3 +73,27 @@ The "Central Nervous System." It hosts **ArgoCD** and the primary data repositor
 ### 2. The Edge Node
 
 The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is mandatory. Performs real-time data processing, local state persistence via **Longhorn**, and eBPF-driven workload isolation.
+
+---
+
+## 📜 Architectural Decision Records (ADR)
+
+### ADR 001: Compute Abstraction (Hub vs. Edge)
+
+#### Status: Accepted (2026-02-22)
+
+#### Context:
+
+> We required a compute strategy that balances operational efficiency in the Hub with deep kernel control at the Edge.
+
+#### Decision:
+
+> Management Hub: Implemented using EKS Auto Mode. This offloads the undifferentiated heavy lifting of node scaling, patching, and AMI management to AWS, allowing the focus to remain on global orchestration.
+
+> Edge Nodes: Implement using EKS Managed Node Groups. This provides the necessary access to the underlying Linux kernel required for eBPF (Cilium) and distributed storage (Longhorn) performance tuning.
+
+#### Consequences:
+
+> Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
+
+---
