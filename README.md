@@ -46,22 +46,20 @@ graph TB
 
 EFI implements a **Hub-and-Spoke** topology across multiple AWS regions, designed to satisfy three core pillars:
 
-1.  **Autonomous Survivability:** Edge nodes must continue to process local data and maintain state even during a "Total Hub Outage" or WAN partition.
-2.  **Kernel-Level Security:** Leveraging **eBPF (Cilium)** to replace antiquated `iptables` and sidecar-heavy service meshes with near-zero overhead networking and identity-aware security.
-3.  **Declarative Consistency:** Every byte of infrastructure and every container is governed by **GitOps (ArgoCD)**, ensuring no configuration drift across the global fleet.
+1.  **Autonomous Survivability:** Edge nodes must continue to process local data and maintain state even during a total hub outage.
+2.  **Kernel-Level Security:** Leveraging **eBPF (Cilium)** to replace `iptables` and sidecar-heavy service meshes with near-zero overhead networking and identity-aware security.
+3.  **Declarative Consistency:** Every piece is governed by **GitOps (ArgoCD)**, ensuring no configuration drift across the global fleet.
 
 ---
 
 ## 🛠 The Tech Stack & "The Why"
 
-In a system design interview, I am prepared to defend these choices based on their performance and reliability trade-offs:
-
-| Component          | Choice            | Technical Justification                                                                     |
+| Component          | Choice            | Justification                                                                               |
 | :----------------- | :---------------- | :------------------------------------------------------------------------------------------ |
 | **Cloud Provider** | **AWS**           | Utilizing Multi-Region VPCs and EKS for managed control plane stability.                    |
 | **Networking**     | **Cilium (eBPF)** | High-throughput, low-latency routing; kernel-level observability (Hubble) without sidecars. |
 | **Storage**        | **Longhorn**      | Cloud-native distributed block storage that ensures data persistence at the edge.           |
-| **Automation**     | **Terraform**     | Modular, multi-region IaC using S3-native state locking (v1.10+).                           |
+| **Automation**     | **Terraform**     | Modular, multi-region IaC using S3-native state locking.                                    |
 | **GitOps**         | **ArgoCD**        | Managing multi-cluster applications via the "App-of-Apps" pattern.                          |
 
 ---
@@ -70,18 +68,8 @@ In a system design interview, I am prepared to defend these choices based on the
 
 ### 1. The Management Hub (`us-east-1`)
 
-The "Central Nervous System." It hosts the **ArgoCD** control plane and the primary data repository.
-
-- **Responsibility:** Global state monitoring, aggregated telemetry, and security policy distribution.
-- **Network Segment:** `10.1.0.0/16`
+The "Central Nervous System." It hosts **ArgoCD** and the primary data repository. Responsible for global state monitoring and aggregated telemetry.
 
 ### 2. The Edge Node (`us-west-2`)
 
-The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is mandatory.
-
-- **Responsibility:** Real-time data processing, local state persistence via **Longhorn**, and eBPF-driven workload isolation.
-- \*\*Network Segment
-
-```
-
-```
+The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is mandatory. Performs real-time data processing, local state persistence via **Longhorn**, and eBPF-driven workload isolation.
