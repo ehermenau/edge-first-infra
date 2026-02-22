@@ -23,8 +23,8 @@ provider "aws" {
     tags = {
       Project     = "Edge-First-Infrastructure"
       ManagedBy   = "Terraform"
-      Environment = "Hub"
-      Space       = "Blue"
+      Environment = "Edge"
+      Space       = "Grey"
     }
   }
 }
