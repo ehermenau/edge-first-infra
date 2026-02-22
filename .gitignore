@@ -1,0 +1,27 @@
+# Local-only terraform directories
+**/.terraform/*
+
+# .tfstate files (These MUST live in S3, never Git)
+*.tfstate
+*.tfstate.*
+
+# Crash logs and sensitive variables
+crash.log
+*.tfvars
+*.tfvars.json
+
+# Local environment variables and overrides
+.terraform.lock.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Credentials and sensitive shells
+.env
+.aws/
+.ssh/
+
+# OS-specific garbage
+.DS_Store
+Thumbs.db
