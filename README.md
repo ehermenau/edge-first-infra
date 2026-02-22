@@ -66,10 +66,10 @@ EFI implements a **Hub-and-Spoke** topology across multiple AWS regions, designe
 
 ## 🧩 System Components
 
-### 1. The Management Hub (`us-east-1`)
+### 1. The Management Hub
 
 The "Central Nervous System." It hosts **ArgoCD** and the primary data repository. Responsible for global state monitoring and aggregated telemetry.
 
-### 2. The Edge Node (`us-west-2`)
+### 2. The Edge Node
 
 The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is mandatory. Performs real-time data processing, local state persistence via **Longhorn**, and eBPF-driven workload isolation.
