@@ -42,7 +42,7 @@ graph TB
 
 ---
 
-## 🏗 Architectural Vision
+## 🏗 The Architecture
 
 EFI implements a **Hub-and-Spoke** topology across multiple AWS regions, designed to satisfy three core pillars:
 
