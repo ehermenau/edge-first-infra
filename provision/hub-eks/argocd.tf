@@ -1,5 +1,5 @@
 # 1. Dedicated Namespace with Interconnect Override
-resource "kubernetes_namespace" "argocd" {
+resource "kubernetes_namespace_v1" "argocd" {
   metadata {
     name = "argocd"
 
@@ -14,14 +14,16 @@ resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
   version    = "9.4.4"
 
   # We use 'set' for high-level toggles
-  set {
-    name  = "server.extraArgs"
-    value = "{--insecure}" # TLS termination will happen at the AWS LB later
-  }
+  set = [
+    {
+      name  = "server.extraArgs"
+      value = "{--insecure}" # TLS termination will happen at the AWS LB later
+    }
+  ]
 
   # Injects the 'Interconnect' tag into all resources created by the Helm chart
   values = [
@@ -36,7 +38,7 @@ resource "helm_release" "argocd" {
     EOF
   ]
 
-  depends_on = [kubernetes_namespace.argocd]
+  depends_on = [kubernetes_namespace_v1.argocd]
 }
 
 # 3. The Root Application (The GitOps Anchor)
