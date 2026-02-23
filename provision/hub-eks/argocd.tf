@@ -54,7 +54,7 @@ resource "kubernetes_manifest" "root_app" {
       project = "default"
       source = {
         repoURL        = "https://gitlab.com/evanhermenau/edge-first-infrastructure.git"
-        targetRevision = "task/efi-bootstrap-argodc"
+        targetRevision = "main"
         path           = "gitops/hub/root"
       }
       destination = {
