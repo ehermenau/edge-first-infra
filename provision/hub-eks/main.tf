@@ -11,7 +11,7 @@ module "eks" {
   # Security: The Hybrid access model
   endpoint_public_access       = true
   endpoint_private_access      = true
-  endpoint_public_access_cidrs = [["$${chomp(data.http.my_public_ip.response_body)}/32"]]
+  endpoint_public_access_cidrs = ["${chomp(data.http.workstation_external_ip.response_body)}/32"]
 
   # Identity: Add current user as admin
   enable_cluster_creator_admin_permissions = true
