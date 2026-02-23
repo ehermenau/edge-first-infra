@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hello-efi
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/evanhermenau/edge-first-infrastructure.git
+    targetRevision: task/efi-bootstrap-argodc
+    path: gitops/hub/apps/hello-efi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
