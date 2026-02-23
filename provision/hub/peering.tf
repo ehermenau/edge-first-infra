@@ -4,8 +4,18 @@ resource "aws_vpc_peering_connection" "hub_to_edge" {
   vpc_id      = module.vpc.vpc_id
   auto_accept = true
 
+  # Enabling DNS resolution across the peering link
+  accepter {
+    allow_remote_vpc_dns_resolution = true
+  }
+
+  requester {
+    allow_remote_vpc_dns_resolution = true
+  }
+
   tags = {
-    Name = "hub-to-edge-peering"
+    Name  = "hub-to-edge-peering"
+    Space = "Interconnect"
   }
 }
 

@@ -22,3 +22,15 @@ module "eks" {
     node_pools = ["general-purpose"]
   }
 }
+
+resource "aws_security_group_rule" "control_plane_to_node_kubelet" {
+  description = "Allow EKS Control Plane to reach Kubelet for logs/exec"
+  type        = "ingress"
+  from_port   = 10250
+  to_port     = 10250
+  protocol    = "tcp"
+
+  # Reference the module outputs directly
+  security_group_id        = module.eks.node_security_group_id
+  source_security_group_id = module.eks.cluster_primary_security_group_id
+}
