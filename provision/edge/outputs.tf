@@ -17,3 +17,18 @@ output "nat_public_ips" {
   description = "Public IP of the NAT Gateway for whitelisting"
   value       = module.vpc.nat_public_ips
 }
+
+output "private_route_table_ids" {
+  description = "List of IDs of private route tables"
+  value       = module.vpc.private_route_table_ids
+}
+
+output "public_route_table_ids" {
+  description = "List of IDs of public route tables"
+  value       = module.vpc.public_route_table_ids
+}
+
+output "vpc_cidr_block" {
+  description = "The CIDR block of the Edge VPC"
+  value       = module.vpc.vpc_cidr_block
+}
