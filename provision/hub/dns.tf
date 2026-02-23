@@ -17,11 +17,3 @@ resource "aws_route53_zone_association" "edge" {
   vpc_id  = data.terraform_remote_state.edge.outputs.vpc_id
 
 }
-
-resource "aws_route53_record" "test" {
-  zone_id = aws_route53_zone.internal.zone_id
-  name    = "discovery.efi.internal"
-  type    = "A"
-  ttl     = "300"
-  records = ["10.1.255.254"] # Dummy IP for testing
-}
