@@ -47,7 +47,7 @@ terraform-plan-eks:
   script:
     - terraform plan -out=tfplan
   dependencies:
-    - terraform-apply-hub # Ensures EKS plan doesn't start until Hub apply is done
+    - terraform-apply-hub
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
@@ -64,5 +64,5 @@ terraform-apply-eks:
     - terraform-plan-eks
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: on_success # Safer to keep the final EKS push manual
+      when: on_success
     - when: never
