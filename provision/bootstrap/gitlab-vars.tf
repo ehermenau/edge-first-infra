@@ -1,3 +1,5 @@
+## requires valid gitlab PAT scoped with correct perms 
+
 # 1. Automatically push the ARN back to GitLab
 resource "gitlab_project_variable" "aws_role_arn" {
   project   = "evanhermenau/edge-first-infrastructure"
