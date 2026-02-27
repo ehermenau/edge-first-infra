@@ -33,7 +33,7 @@ terraform-apply-hub:
   script:
     - terraform apply -auto-approve tfplan
   dependencies:
-    - terraform-plan
+    - terraform-plan-hub
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
