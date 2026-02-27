@@ -1,0 +1,28 @@
+stages:
+  - triggers
+
+# Template for child triggers
+.terraform_trigger:
+  stage: triggers
+  trigger:
+    include: .gitlab/ci/tf-module-template.yml
+    strategy: depend # Parent waits for child to succeed
+
+trigger-hub:
+  extends: .terraform_trigger
+  variables:
+    TF_ROOT: "terraform/hub"
+    TF_NAME: "hub"
+  only:
+    changes:
+      - terraform/hub/**/*
+
+trigger-hub-eks:
+  extends: .terraform_trigger
+  variables:
+    TF_ROOT: "terraform/hub-eks"
+    TF_NAME: "hub-eks"
+  needs: ["trigger-hub"] # Ensures Networking is ready before EKS starts
+  only:
+    changes:
+      - terraform/hub-eks/**/*
