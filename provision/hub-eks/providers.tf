@@ -17,7 +17,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "efi-terraform-state-30cd8fad" # Hardcoded string required here
+    bucket       = "" # Passed in via var 
     key          = "hub-eks/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
