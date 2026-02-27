@@ -1,0 +1,55 @@
+image:
+  name: hashicorp/terraform:1.14
+
+variables:
+  # The state path in S3 will look like: bootstrap-bucket/hub/terraform.tfstate
+  TF_STATE_KEY: "${TF_NAME}/terraform.tfstate"
+
+.tf_base:
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - cd ${TF_ROOT}
+    # OIDC Authentication
+    - export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
+      $(aws sts assume-role-with-web-identity \
+      --role-arn ${AWS_ROLE_ARN} \
+      --role-session-name "GitLabCI-${TF_NAME}-${CI_PIPELINE_ID}" \
+      --web-identity-token ${GITLAB_OIDC_TOKEN} \
+      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+      --output text))
+    # Injecting the Bucket from Bootstrap and the Key for this tier
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}" -backend-config="key=${TF_STATE_KEY}"
+
+stages:
+  - validate
+  - plan
+  - deploy
+
+tf-validate:
+  extends: .tf_base
+  stage: validate
+  script:
+    - terraform validate
+
+tf-plan:
+  extends: .tf_base
+  stage: plan
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - ${TF_ROOT}/tfplan
+    expire_in: 1 week
+
+tf-apply:
+  extends: .tf_base
+  stage: deploy
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - tf-plan
+  when: manual # Required human-in-the-loop for Nvidia/Snowflake standards
+  only:
+    - main
