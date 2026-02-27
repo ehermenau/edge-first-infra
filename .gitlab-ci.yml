@@ -13,6 +13,7 @@
 
 stages:
   - plan
+  - apply
 
 terraform-plan:
   extends: .terraform_base
