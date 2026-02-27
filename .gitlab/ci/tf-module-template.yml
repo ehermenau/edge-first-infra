@@ -22,7 +22,7 @@ variables:
       --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
       --output text))
     # Injecting the Bucket from Bootstrap and the Key for this tier
-    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}" -backend-config="key=${TF_STATE_KEY}"
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
 stages:
   - validate
