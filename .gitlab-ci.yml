@@ -23,7 +23,7 @@ terraform-plan-hub:
   variables:
     TF_ROOT: "terraform/hub"
   script:
-    - terraform plan -out=tfplan
+    - terraform plan
 
 terraform-apply-hub:
   extends: .terraform_base
@@ -31,7 +31,7 @@ terraform-apply-hub:
   variables:
     TF_ROOT: "terraform/hub"
   script:
-    - terraform apply -auto-approve tfplan
+    - terraform apply -auto-approve
   dependencies:
     - terraform-plan-hub
   rules:
@@ -45,7 +45,7 @@ terraform-plan-eks:
   variables:
     TF_ROOT: "terraform/hub-eks"
   script:
-    - terraform plan -out=tfplan
+    - terraform plan
   dependencies:
     - terraform-apply-hub
   rules:
@@ -59,7 +59,7 @@ terraform-apply-eks:
   variables:
     TF_ROOT: "terraform/hub-eks"
   script:
-    - terraform apply -auto-approve tfplan
+    - terraform apply -auto-approve
   dependencies:
     - terraform-plan-eks
   rules:
