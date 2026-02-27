@@ -11,9 +11,3 @@ resource "aws_route53_zone" "internal" {
     Space = "Interconnect"
   }
 }
-
-resource "aws_route53_zone_association" "edge" {
-  zone_id = aws_route53_zone.internal.zone_id
-  vpc_id  = data.terraform_remote_state.edge.outputs.vpc_id
-
-}
