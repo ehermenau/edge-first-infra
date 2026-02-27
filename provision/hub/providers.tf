@@ -21,10 +21,9 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "Edge-First-Infrastructure"
-      ManagedBy   = "Terraform"
-      Environment = "Hub"
-      Space       = "Blue"
+      Project   = "Edge-First-Infrastructure"
+      ManagedBy = "Terraform"
+      Component = "Control-Plane"
     }
   }
 }
