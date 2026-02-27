@@ -1,11 +1,7 @@
-# 1. Dedicated Namespace with Interconnect Override
 resource "kubernetes_namespace_v1" "argocd" {
   metadata {
     name = "argocd"
 
-    labels = {
-      Space = "Interconnect"
-    }
   }
 }
 
@@ -25,12 +21,11 @@ resource "helm_release" "argocd" {
     }
   ]
 
-  # Injects the 'Interconnect' tag into all resources created by the Helm chart
+  # Injects the 'EFI' tag into all resources created by the Helm chart
   values = [
     <<-EOF
     global:
       additionalLabels:
-        Space: Interconnect
         Project: EFI
     server:
       service:
