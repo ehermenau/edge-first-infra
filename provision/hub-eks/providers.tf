@@ -28,10 +28,9 @@ provider "aws" {
   region = "us-east-1"
   default_tags {
     tags = {
-      Project     = "Edge-First-Infrastructure"
-      Environment = "Hub"
-      Space       = "Blue"
-      ManagedBy   = "Terraform"
+      Project   = "Edge-First-Infrastructure"
+      ManagedBy = "Terraform"
+      Component = "Control-Plane"
     }
   }
 }
