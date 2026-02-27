@@ -1,13 +1,14 @@
 # 1. The "Template" - Define OIDC and Auth logic once
 .terraform_base:
-  image: hashicorp/terraform:latest
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
-    # Navigate to the specific project folder
     - cd hub
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
