@@ -1,25 +1,25 @@
+# 1. The "Template" - Define OIDC and Auth logic once
+.terraform_base:
+  image: hashicorp/terraform:latest
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+    # Navigate to the specific project folder
+    - cd hub
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
+
 stages:
-  - triggers
+  - plan
 
-# Template for child triggers
-.terraform_trigger:
-  stage: triggers
-  trigger:
-    include: .gitlab/ci/tf-module-template.yml
-    strategy: depend # Parent waits for child to succeed
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push" # Trigger on any branch push
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" # Trigger on MRs
-
-trigger-hub:
-  extends: .terraform_trigger
-  variables:
-    TF_ROOT: "terraform/hub"
-    TF_NAME: "hub"
-
-trigger-hub-eks:
-  extends: .terraform_trigger
-  variables:
-    TF_ROOT: "terraform/hub-eks"
-    TF_NAME: "hub-eks"
-  needs: ["trigger-hub"]
+# 2. The Implementation - Use a Matrix to target subfolders
+terraform-plan:
+  extends: .terraform_base
+  stage: plan
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - ${TF_ROOT}/tfplan
