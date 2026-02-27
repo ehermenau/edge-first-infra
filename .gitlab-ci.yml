@@ -22,4 +22,4 @@ trigger-hub-eks:
   variables:
     TF_ROOT: "terraform/hub-eks"
     TF_NAME: "hub-eks"
-  needs: ["trigger-hub"] # Ensures Networking is ready before EKS starts
+  needs: ["trigger-hub"]

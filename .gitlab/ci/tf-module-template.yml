@@ -1,5 +1,6 @@
 image:
   name: hashicorp/terraform:1.14
+  entrypoint: ""
 
 variables:
   # The state path in S3 will look like: bootstrap-bucket/hub/terraform.tfstate
