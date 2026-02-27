@@ -22,3 +22,15 @@ terraform-plan:
   artifacts:
     paths:
       - tfplan
+
+terraform-apply:
+  extends: .terraform_base
+  stage: apply
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual # Recommended for production safety; change to 'on_success' for full auto
+    - when: never
