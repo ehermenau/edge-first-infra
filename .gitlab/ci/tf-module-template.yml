@@ -50,6 +50,9 @@ tf-apply:
     - terraform apply -auto-approve tfplan
   dependencies:
     - tf-plan
-  when: manual # Required human-in-the-loop for Nvidia/Snowflake standards
-  only:
-    - main
+  rules:
+    # 1. If we are on the main branch, make the job available but MANUAL
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    # 2. For any other branch (feature branches), do not show the job at all
+    - when: never

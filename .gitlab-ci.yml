@@ -7,6 +7,9 @@ stages:
   trigger:
     include: .gitlab/ci/tf-module-template.yml
     strategy: depend # Parent waits for child to succeed
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" # Trigger on any branch push
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" # Trigger on MRs
 
 trigger-hub:
   extends: .terraform_trigger
@@ -15,7 +18,7 @@ trigger-hub:
     TF_NAME: "hub"
   only:
     changes:
-      - terraform/hub/**/*
+      - terraform/hub/*.tf
 
 trigger-hub-eks:
   extends: .terraform_trigger
@@ -25,4 +28,4 @@ trigger-hub-eks:
   needs: ["trigger-hub"] # Ensures Networking is ready before EKS starts
   only:
     changes:
-      - terraform/hub-eks/**/*
+      - terraform/hub-eks/*.tf
