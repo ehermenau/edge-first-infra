@@ -52,4 +52,3 @@ tf-apply:
     - tf-plan
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual

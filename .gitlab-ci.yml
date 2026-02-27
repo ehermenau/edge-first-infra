@@ -16,10 +16,6 @@ trigger-hub:
   variables:
     TF_ROOT: "terraform/hub"
     TF_NAME: "hub"
-  rules:
-    - changes:
-        paths:
-          - terraform/hub/*.tf
 
 trigger-hub-eks:
   extends: .terraform_trigger
@@ -27,7 +23,3 @@ trigger-hub-eks:
     TF_ROOT: "terraform/hub-eks"
     TF_NAME: "hub-eks"
   needs: ["trigger-hub"] # Ensures Networking is ready before EKS starts
-  rules:
-    - changes:
-        paths:
-          - "terraform/hub-eks/*.tf"
