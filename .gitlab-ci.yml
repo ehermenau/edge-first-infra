@@ -1,0 +1,68 @@
+.terraform_base:
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+    - cd ${TF_ROOT}
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
+
+stages:
+  - plan-hub
+  - apply-hub
+  - plan-eks
+  - apply-eks
+
+terraform-plan-hub:
+  extends: .terraform_base
+  stage: plan-hub
+  variables:
+    TF_ROOT: "terraform/hub"
+  script:
+    - terraform plan -out=tfplan
+
+terraform-apply-hub:
+  extends: .terraform_base
+  stage: apply-hub
+  variables:
+    TF_ROOT: "terraform/hub"
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan-hub
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never
+
+terraform-plan-eks:
+  extends: .terraform_base
+  stage: plan-eks
+  variables:
+    TF_ROOT: "terraform/hub-eks"
+  script:
+    - terraform plan -out=tfplan
+  dependencies:
+    - terraform-apply-hub
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never
+
+terraform-apply-eks:
+  extends: .terraform_base
+  stage: apply-eks
+  variables:
+    TF_ROOT: "terraform/hub-eks"
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan-eks
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never

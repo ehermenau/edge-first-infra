@@ -33,6 +33,7 @@ resource "aws_iam_role_policy" "efi_infrastructure_perms" {
       {
         Effect = "Allow"
         Action = [
+          "ec2:*", # Needed for Hub
           "eks:*", # Needed for Hub-EKS
           "iam:*", # Needed to create EKS node roles
           "s3:*",  # Needed for state and artifacts
