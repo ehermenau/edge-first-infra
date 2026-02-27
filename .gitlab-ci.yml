@@ -20,9 +20,6 @@ terraform-plan:
   stage: plan
   script:
     - terraform plan -out=tfplan
-  artifacts:
-    paths:
-      - tfplan
 
 terraform-apply:
   extends: .terraform_base
@@ -33,5 +30,5 @@ terraform-apply:
     - terraform-plan
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: manual # Recommended for production safety; change to 'on_success' for full auto
+      when: on_success
     - when: never
