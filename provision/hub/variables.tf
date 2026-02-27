@@ -13,5 +13,5 @@ variable "vpc_cidr" {
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "Hub"
+  default     = "Control-Plane"
 }
