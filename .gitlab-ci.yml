@@ -8,22 +8,28 @@
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
-    - cd terraform/hub
+    - cd ${TF_ROOT}
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
 stages:
-  - plan
-  - apply
+  - plan-hub
+  - apply-hub
+  - plan-eks
+  - apply-eks
 
-terraform-plan:
+terraform-plan-hub:
   extends: .terraform_base
-  stage: plan
+  stage: plan-hub
+  variables:
+    TF_ROOT: "terraform/hub"
   script:
     - terraform plan -out=tfplan
 
-terraform-apply:
+terraform-apply-hub:
   extends: .terraform_base
-  stage: apply
+  stage: apply-hub
+  variables:
+    TF_ROOT: "terraform/hub"
   script:
     - terraform apply -auto-approve tfplan
   dependencies:
@@ -31,4 +37,32 @@ terraform-apply:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
+    - when: never
+
+terraform-plan-eks:
+  extends: .terraform_base
+  stage: plan-eks
+  variables:
+    TF_ROOT: "terraform/hub-eks"
+  script:
+    - terraform plan -out=tfplan
+  dependencies:
+    - terraform-apply-hub # Ensures EKS plan doesn't start until Hub apply is done
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never
+
+terraform-apply-eks:
+  extends: .terraform_base
+  stage: apply-eks
+  variables:
+    TF_ROOT: "terraform/hub-eks"
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan-eks
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success # Safer to keep the final EKS push manual
     - when: never
