@@ -7,7 +7,7 @@ stages:
 # ---- Templates ----
 
 .validate_template:
-  state: validate
+  stage: validate
   image:
     name: hashicorp/terraform:latest
     entrypoint: [""]
@@ -17,7 +17,7 @@ stages:
     - terraform validate
 
 .lint_template:
-  state: lint
+  stage: lint
   image:
     name: ghcr.io/terraform-linters/tflint:latest
     entrypoint: [""]
