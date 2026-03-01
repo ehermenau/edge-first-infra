@@ -7,5 +7,7 @@ trigger-vpc:
     include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
     - changes:
         - terraform/vpc-infra/**/*
