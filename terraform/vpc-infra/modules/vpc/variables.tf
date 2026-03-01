@@ -1,3 +1,5 @@
+# vpc-infra/modules/vpc/variables.tf
+
 variable "az_count" {
   description = "Number of Availability Zones to utilize"
   type        = number
@@ -7,11 +9,9 @@ variable "az_count" {
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
-  default     = "10.1.0.0/16"
 }
 
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "Control-Plane"
 }
