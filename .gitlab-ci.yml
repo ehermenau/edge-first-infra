@@ -1,85 +1,15 @@
 stages:
-  - validate
-  - lint
-  - plan
-  - apply
+  - triggers
 
-# ---- Templates ----
-
-.validate_template:
-  stage: validate
-  image:
-    name: hashicorp/terraform:latest
-    entrypoint: [""]
-  script:
-    - cd ${TF_ROOT}
-    - terraform init -backend=false
-    - terraform validate
-
-.lint_template:
-  stage: lint
-  image:
-    name: ghcr.io/terraform-linters/tflint:latest
-    entrypoint: [""]
-  script:
-    - tflint --init
-    - tflint --recursive
-
-.terraform_base:
-  image:
-    name: hashicorp/terraform:latest
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  variables:
-    AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
-  before_script:
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - cd ${TF_ROOT}
-    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
-
-# ---- Jobs ----
-
-hub_validate:
-  extends: .validate_template
-  variables:
-    TF_ROOT: "terraform/hub"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH # Matches any branch push
-
-hub_lint:
-  extends: .lint_template
-  variables:
-    TF_ROOT: "terraform/hub"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH # Matches any branch push
-
-hub_plan:
-  extends: .terraform_base
-  stage: plan
-  variables:
-    TF_ROOT: "terraform/hub"
-  script:
-    - terraform plan -out=hub.tfplan
-  artifacts:
-    paths:
-      - terraform/hub/hub.tfplan
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-
-hub_apply:
-  extends: .terraform_base
-  stage: apply
-  variables:
-    TF_ROOT: "terraform/hub"
-  script:
-    - terraform apply -auto-approve hub.tfplan
-  dependencies:
-    - hub_plan
+trigger-vpc:
+  stage: triggers
+  trigger:
+    include: terraform/vpc-infra/.gitlab-ci.yml
+    strategy: depend
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - changes:
+        - terraform/vpc-infra/**/*

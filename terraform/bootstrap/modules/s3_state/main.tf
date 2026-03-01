@@ -1,11 +1,6 @@
-# Unique ID to prevent bucket name collisions
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-
 # The Bucket 
 resource "aws_s3_bucket" "state" {
-  bucket = "efi-terraform-state-${random_id.suffix.hex}"
+  bucket = "efi-${var.environment}-terraform-state"
 
   lifecycle {
     prevent_destroy = true
@@ -38,4 +33,14 @@ resource "aws_s3_bucket_public_access_block" "state" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "gitlab_project_variable" "tf_state_bucket" {
+  project = "evanhermenau/edge-first-infrastructure"
+  key     = "TF_STATE_BUCKET"
+  value   = aws_s3_bucket.state.bucket
+
+  environment_scope = var.environment
+  protected         = false
+  masked            = true
 }

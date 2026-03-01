@@ -7,11 +7,19 @@ variable "az_count" {
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string
-  default     = "10.1.0.0/16"
 }
 
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "Control-Plane"
+  validation {
+    condition     = contains(["staging", "prod"], var.environment)
+    error_message = "Environment must be staging or prod."
+  }
+}
+
+variable "namespace" {
+  description = "The base domain for the project"
+  type        = string
+  default     = "efi.internal"
 }

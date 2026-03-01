@@ -10,7 +10,7 @@ terraform {
 
   backend "s3" {
     bucket       = "" # Passed in via var 
-    key          = "hub/terraform.tfstate"
+    key          = "staging/vpc/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
   }
@@ -21,9 +21,10 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = "Edge-First-Infrastructure"
-      ManagedBy = "Terraform"
-      Component = "Control-Plane"
+      Project     = "Edge-First-Infrastructure"
+      ManagedBy   = "Terraform"
+      Component   = "Control-Plane"
+      Environment = "Staging"
     }
   }
 }
