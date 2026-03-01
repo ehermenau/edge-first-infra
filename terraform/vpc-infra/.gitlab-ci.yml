@@ -1,10 +1,13 @@
 stages:
+  - lint
   - validate
   - plan
   - apply
 
 .terraform_base:
-  image: hashicorp/terraform:latest
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
@@ -15,8 +18,7 @@ stages:
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
 tflint:
-  extends: .terraform_base
-  stage: validate
+  stage: lint
   image:
     name: ghcr.io/terraform-linters/tflint:latest
     entrypoint: [""]
@@ -26,18 +28,22 @@ tflint:
   environment:
     name: ${ENV}
   script:
+    - cd terraform/vpc-infra/environments/${ENV}
     - tflint --init
     - tflint --recursive --format=compact
 
 tf_validate:
-  extends: .terraform_base
   stage: validate
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
   parallel:
     matrix:
       - ENV: [staging, prod]
   environment:
     name: ${ENV}
   script:
+    - cd terraform/vpc-infra/environments/${ENV}
     - terraform validate
 
 tf_plan:
