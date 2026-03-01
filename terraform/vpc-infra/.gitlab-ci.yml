@@ -78,7 +78,12 @@ tf_apply:
   script:
     - terraform apply -auto-approve ${ENV}.tfplan
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $ENV == "prod"
+    # Allow manual apply on the Merge Request to verify
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $ENV == "staging"
       when: manual
+    # Automatically keep main updated after merge
     - if: $CI_COMMIT_BRANCH == "main" && $ENV == "staging"
       when: on_success
+    # ALWAYS manual for prod
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
