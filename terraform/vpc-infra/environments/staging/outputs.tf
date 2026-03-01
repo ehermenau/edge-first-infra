@@ -1,8 +1,9 @@
 output "vpc_id" {
-  value = module.vpc.vpc_id
+  description = "ID of the VPC (Passed to Remote State)"
+  value       = module.vpc.vpc_id
 }
 
-output "public_subnets" {
-  description = "List of IDs for the public subnets"
-  value       = module.vpc.public_subnets
+output "private_subnets" {
+  description = "IDs of the private subnets (Passed to Remote State)"
+  value       = module.vpc.private_subnets
 }
