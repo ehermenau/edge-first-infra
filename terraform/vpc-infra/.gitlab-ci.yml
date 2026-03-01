@@ -65,22 +65,32 @@ tf_plan:
     paths:
       - terraform/vpc-infra/environments/${ENV}/${ENV}.tfplan
 
-tf_apply:
+staging_apply:
   extends: .terraform_base
   variables:
     TF_ROOT: "vpc-infra"
+    ENV: "staging"
   stage: apply
-  parallel:
-    matrix:
-      - ENV: [staging, prod]
   environment:
-    name: ${ENV}
+    name: staging
   script:
-    - terraform apply -auto-approve ${ENV}.tfplan
+    - terraform apply -auto-approve staging.tfplan
   rules:
-    - if: $ENV == "staging" && $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
-    - if: $ENV == "staging" && $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
-    - if: $ENV == "prod" && $CI_COMMIT_BRANCH == "main"
+
+prod_apply:
+  extends: .terraform_base
+  variables:
+    TF_ROOT: "vpc-infra"
+    ENV: "prod"
+  stage: apply
+  environment:
+    name: prod
+  script:
+    - terraform apply -auto-approve prod.tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
       when: manual
