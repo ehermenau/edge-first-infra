@@ -1,3 +1,8 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
 stages:
   - triggers
 
@@ -6,6 +11,3 @@ trigger-vpc:
   trigger:
     include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
