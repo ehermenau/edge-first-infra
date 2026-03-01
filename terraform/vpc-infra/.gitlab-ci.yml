@@ -14,7 +14,21 @@ stages:
     - cd vpc-infra/environments/${ENV}
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
-# Run Validate for both Staging and Prod
+tflint:
+  extends: .terraform_base
+  stage: validate
+  image:
+    name: ghcr.io/terraform-linters/tflint:latest
+    entrypoint: [""]
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - tflint --init
+    - tflint --recursive --format=compact
+
 tf_validate:
   extends: .terraform_base
   stage: validate
@@ -26,7 +40,6 @@ tf_validate:
   script:
     - terraform validate
 
-# Run Plan for both Staging and Prod
 tf_plan:
   extends: .terraform_base
   stage: plan
@@ -41,7 +54,6 @@ tf_plan:
     paths:
       - vpc-infra/environments/${ENV}/${ENV}.tfplan
 
-# Apply logic
 tf_apply:
   extends: .terraform_base
   stage: apply
