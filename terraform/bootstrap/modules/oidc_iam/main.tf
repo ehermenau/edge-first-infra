@@ -1,8 +1,3 @@
-resource "aws_iam_openid_connect_provider" "gitlab" {
-  url            = "https://gitlab.com"
-  client_id_list = ["https://gitlab.com"]
-}
-
 # The Identity (Who is it?)
 resource "aws_iam_role" "gitlab_ci_role" {
   name = "efi-${var.environment}-IAM-role-gitlab-deployer"
