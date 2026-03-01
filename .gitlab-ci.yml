@@ -4,7 +4,7 @@ stages:
 trigger-vpc:
   stage: triggers
   trigger:
-    include: vpc-infra/.gitlab-ci.yml
+    include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
   rules:
     - changes:
