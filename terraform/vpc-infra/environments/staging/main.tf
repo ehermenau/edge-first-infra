@@ -1,13 +1,8 @@
-# vpc-infra/environments/staging/main.tf
+# environments/staging/main.tf
 
 module "vpc" {
-  source = "../../modules/vpc"
-
-  # Pass your staging-specific variables here
-  vpc_cidr    = "10.1.0.0/16"
-  environment = "staging"
-}
-
-output "vpc_id" {
-  value = module.vpc.vpc_id
+  source      = "../../modules/vpc"
+  vpc_cidr    = var.vpc_cidr
+  environment = var.environment
+  az_count    = var.az_count
 }
