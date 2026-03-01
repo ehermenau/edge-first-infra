@@ -1,85 +1,11 @@
 stages:
-  - validate
-  - lint
-  - plan
-  - apply
+  - triggers
 
-# ---- Templates ----
-
-.validate_template:
-  stage: validate
-  image:
-    name: hashicorp/terraform:latest
-    entrypoint: [""]
-  script:
-    - cd ${TF_ROOT}
-    - terraform init -backend=false
-    - terraform validate
-
-.lint_template:
-  stage: lint
-  image:
-    name: ghcr.io/terraform-linters/tflint:latest
-    entrypoint: [""]
-  script:
-    - tflint --init
-    - tflint --recursive
-
-.terraform_base:
-  image:
-    name: hashicorp/terraform:latest
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  variables:
-    AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
-  before_script:
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - cd ${TF_ROOT}
-    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
-
-# ---- Jobs ----
-
-vpc-infra_validate:
-  extends: .validate_template
-  variables:
-    TF_ROOT: "terraform/vpc-infra"
+trigger-vpc:
+  stage: triggers
+  trigger:
+    include: vpc-infra/.gitlab-ci.yml
+    strategy: depend
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH # Matches any branch push
-
-vpc-infra_lint:
-  extends: .lint_template
-  variables:
-    TF_ROOT: "terraform/vpc-infra"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH # Matches any branch push
-
-vpc-infra_plan:
-  extends: .terraform_base
-  stage: plan
-  variables:
-    TF_ROOT: "terraform/vpc-infra"
-  script:
-    - terraform plan -out=vpc-infra.tfplan
-  artifacts:
-    paths:
-      - terraform/vpc-infra/vpc-infra.tfplan
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-
-vpc-infra_apply:
-  extends: .terraform_base
-  stage: apply
-  variables:
-    TF_ROOT: "terraform/vpc-infra"
-  script:
-    - terraform apply -auto-approve vpc-infra.tfplan
-  dependencies:
-    - vpc-infra_plan
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+    - changes:
+        - vpc-infra/**/*

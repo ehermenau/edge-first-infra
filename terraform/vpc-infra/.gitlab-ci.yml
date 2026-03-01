@@ -1,0 +1,59 @@
+stages:
+  - validate
+  - plan
+  - apply
+
+.terraform_base:
+  image: hashicorp/terraform:latest
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - export AWS_ROLE_ARN=${AWS_ROLE_ARN}
+    - cd vpc-infra/environments/${ENV}
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
+
+# Run Validate for both Staging and Prod
+tf_validate:
+  extends: .terraform_base
+  stage: validate
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - terraform validate
+
+# Run Plan for both Staging and Prod
+tf_plan:
+  extends: .terraform_base
+  stage: plan
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - terraform plan -out=${ENV}.tfplan
+  artifacts:
+    paths:
+      - vpc-infra/environments/${ENV}/${ENV}.tfplan
+
+# Apply logic
+tf_apply:
+  extends: .terraform_base
+  stage: apply
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - terraform apply -auto-approve ${ENV}.tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $ENV == "prod"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main" && $ENV == "staging"
+      when: on_success
