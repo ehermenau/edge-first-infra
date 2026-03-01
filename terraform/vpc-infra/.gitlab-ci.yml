@@ -11,7 +11,7 @@ stages:
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - export AWS_ROLE_ARN=${AWS_ROLE_ARN}
-    - cd vpc-infra/environments/${ENV}
+    - cd terraform/vpc-infra/environments/${ENV}
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
 tflint:
@@ -52,7 +52,7 @@ tf_plan:
     - terraform plan -out=${ENV}.tfplan
   artifacts:
     paths:
-      - vpc-infra/environments/${ENV}/${ENV}.tfplan
+      - terraform/vpc-infra/environments/${ENV}/${ENV}.tfplan
 
 tf_apply:
   extends: .terraform_base
