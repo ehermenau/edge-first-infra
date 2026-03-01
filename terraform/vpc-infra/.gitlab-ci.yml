@@ -64,6 +64,9 @@ tf_plan:
   artifacts:
     paths:
       - terraform/vpc-infra/environments/${ENV}/${ENV}.tfplan
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+      when: on_success
 
 staging_apply:
   extends: .terraform_base
