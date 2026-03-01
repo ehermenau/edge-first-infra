@@ -15,7 +15,7 @@ stages:
     AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - cd terraform/vpc-infra/environments/${ENV}
+    - cd terraform/${TF_ROOT}/environments/${ENV}
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 
 tflint:
@@ -35,6 +35,8 @@ tflint:
 
 tf_validate:
   extends: .terraform_base
+  variables:
+    TF_ROOT: "vpc-infra"
   stage: validate
   image:
     name: hashicorp/terraform:latest
@@ -49,6 +51,8 @@ tf_validate:
 
 tf_plan:
   extends: .terraform_base
+  variables:
+    TF_ROOT: "vpc-infra"
   stage: plan
   parallel:
     matrix:
@@ -63,6 +67,8 @@ tf_plan:
 
 tf_apply:
   extends: .terraform_base
+  variables:
+    TF_ROOT: "vpc-infra"
   stage: apply
   parallel:
     matrix:
