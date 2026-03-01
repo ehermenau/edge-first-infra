@@ -41,45 +41,45 @@ stages:
 
 # ---- Jobs ----
 
-hub_validate:
+vpc-infra_validate:
   extends: .validate_template
   variables:
-    TF_ROOT: "terraform/hub"
+    TF_ROOT: "terraform/vpc-infra"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH # Matches any branch push
 
-hub_lint:
+vpc-infra_lint:
   extends: .lint_template
   variables:
-    TF_ROOT: "terraform/hub"
+    TF_ROOT: "terraform/vpc-infra"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH # Matches any branch push
 
-hub_plan:
+vpc-infra_plan:
   extends: .terraform_base
   stage: plan
   variables:
-    TF_ROOT: "terraform/hub"
+    TF_ROOT: "terraform/vpc-infra"
   script:
-    - terraform plan -out=hub.tfplan
+    - terraform plan -out=vpc-infra.tfplan
   artifacts:
     paths:
-      - terraform/hub/hub.tfplan
+      - terraform/vpc-infra/vpc-infra.tfplan
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
 
-hub_apply:
+vpc-infra_apply:
   extends: .terraform_base
   stage: apply
   variables:
-    TF_ROOT: "terraform/hub"
+    TF_ROOT: "terraform/vpc-infra"
   script:
-    - terraform apply -auto-approve hub.tfplan
+    - terraform apply -auto-approve vpc-infra.tfplan
   dependencies:
-    - hub_plan
+    - vpc-infra_plan
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
