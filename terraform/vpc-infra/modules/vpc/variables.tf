@@ -1,5 +1,3 @@
-# vpc-infra/modules/vpc/variables.tf
-
 variable "az_count" {
   description = "Number of Availability Zones to utilize"
   type        = number
@@ -18,4 +16,10 @@ variable "environment" {
     condition     = contains(["staging", "prod"], var.environment)
     error_message = "Environment must be staging or prod."
   }
+}
+
+variable "namespace" {
+  description = "The base domain for the project"
+  type        = string
+  default     = "efi.internal"
 }
