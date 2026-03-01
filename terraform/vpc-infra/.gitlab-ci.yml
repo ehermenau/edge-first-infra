@@ -33,6 +33,7 @@ tflint:
     - tflint --recursive --format=compact
 
 tf_validate:
+  extends: .terraform_base
   stage: validate
   image:
     name: hashicorp/terraform:latest
@@ -43,7 +44,6 @@ tf_validate:
   environment:
     name: ${ENV}
   script:
-    - cd terraform/vpc-infra/environments/${ENV}
     - terraform validate
 
 tf_plan:
