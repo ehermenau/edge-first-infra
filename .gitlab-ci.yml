@@ -6,6 +6,3 @@ trigger-vpc:
   trigger:
     include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
-  rules:
-    - changes:
-        - vpc-infra/**/*
