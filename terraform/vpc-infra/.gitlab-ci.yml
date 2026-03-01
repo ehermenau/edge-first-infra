@@ -65,7 +65,7 @@ tf_plan:
     paths:
       - terraform/vpc-infra/environments/${ENV}/${ENV}.tfplan
   rules:
-    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline" || $CI_MERGE_REQUEST_IID
       when: on_success
 
 staging_apply:
