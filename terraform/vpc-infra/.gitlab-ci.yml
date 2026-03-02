@@ -13,6 +13,7 @@ stages:
       aud: https://gitlab.com
   variables:
     AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
+    TF_VAR_aws_role_arn: $AWS_ROLE_ARN
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - cd terraform/${TF_ROOT}/environments/${ENV}
