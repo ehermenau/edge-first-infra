@@ -1,0 +1,16 @@
+include:
+  - local: "terraform/vpc-infra/.gitlab-ci.yml"
+
+tf_plan_eks:
+  extends: .terraform_base
+  variables:
+    TF_ROOT: "eks-infra"
+  stage: plan
+  parallel:
+    matrix:
+      - ENV: [staging]
+  script:
+    - terraform plan -out=${ENV}.tfplan
+  artifacts:
+    paths:
+      - terraform/eks-infra/environments/${ENV}/${ENV}.tfplan
