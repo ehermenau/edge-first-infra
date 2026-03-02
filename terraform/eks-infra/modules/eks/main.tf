@@ -11,9 +11,6 @@ module "eks" {
   # Enable public access until we can lock it down via ZT 
   endpoint_public_access = true
 
-  # Identity: Add current user as admin
-  enable_cluster_creator_admin_permissions = true
-
   # EKS Auto Mode: AWS manages the 'general-purpose' compute nodes
   compute_config = {
     enabled    = true
