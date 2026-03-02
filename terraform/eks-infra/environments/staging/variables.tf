@@ -1,14 +1,14 @@
-variable "vpc_cidr" {
-  type    = string
-  default = "10.1.0.0/16"
-}
-
 variable "environment" {
   type    = string
   default = "staging"
 }
 
-variable "az_count" {
-  type    = number
-  default = 3
+variable "aws_role_arn" {
+  type        = string
+  description = "The IAM Role ARN used by the GitLab Runner"
+}
+
+variable "admin_user_arn" {
+  type        = string
+  description = "Your personal IAM ARN for emergency cluster access"
 }
