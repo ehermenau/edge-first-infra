@@ -22,7 +22,7 @@ terraform {
 
   backend "s3" {
     bucket       = "" # Passed in via var 
-    key          = "staging/eks/terraform.tfstate"
+    key          = "staging/platform/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
   }
