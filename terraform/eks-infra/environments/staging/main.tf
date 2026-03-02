@@ -1,7 +1,7 @@
 module "eks" {
   source = "../../modules/eks"
 
-  vpc_cidr    = var.vpc_cidr
-  environment = var.environment
-  az_count    = var.az_count
+  environment    = var.environment
+  aws_role_arn   = var.aws_role_arn
+  admin_user_arn = var.admin_user_arn
 }
