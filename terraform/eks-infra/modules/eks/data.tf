@@ -1,7 +1,7 @@
 data "aws_vpc" "hub" {
   filter {
     name   = "tag:Name"
-    values = ["efi-control-plane-vpc"]
+    values = ["efi-${var.environment}-vpc"]
   }
 }
 
