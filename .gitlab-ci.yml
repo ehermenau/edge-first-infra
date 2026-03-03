@@ -19,6 +19,15 @@ trigger-eks:
   trigger:
     include: terraform/eks-infra/.gitlab-ci.yml
     strategy: depend
+  needs:
+    - trigger-vpc
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - changes:
+        - terraform/eks-infra/**/*
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always

@@ -8,7 +8,7 @@ tf_plan_eks:
   stage: plan
   parallel:
     matrix:
-      - ENV: [staging]
+      - ENV: [staging, prod]
   environment:
     name: ${ENV}
   script:
@@ -16,3 +16,36 @@ tf_plan_eks:
   artifacts:
     paths:
       - terraform/eks-infra/environments/${ENV}/${ENV}.tfplan
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline" || $CI_MERGE_REQUEST_IID
+      when: on_success
+
+staging_apply_eks:
+  extends: .terraform_base
+  variables:
+    TF_ROOT: "eks-infra"
+    ENV: "staging"
+  stage: apply
+  environment:
+    name: staging
+  script:
+    - terraform apply -auto-approve staging.tfplan
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+
+prod_apply_eks:
+  extends: .terraform_base
+  variables:
+    TF_ROOT: "eks-infra"
+    ENV: "prod"
+  stage: apply
+  environment:
+    name: prod
+  script:
+    - terraform apply -auto-approve prod.tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
