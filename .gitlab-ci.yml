@@ -5,6 +5,8 @@ stages:
   changes:
     - .gitlab-ci.yml
     - .gitlab-ci/**/*
+  if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+  when: always
 
 trigger-vpc:
   stage: triggers
@@ -30,9 +32,5 @@ trigger-eks:
       job: trigger-vpc
   rules:
     - <<: *ci_logic
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
     - changes:
         - terraform/eks-infra/**/*

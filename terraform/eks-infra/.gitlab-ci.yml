@@ -4,11 +4,21 @@ include:
 variables:
   TF_ROOT: "eks-infra"
 
-tf_plan_eks:
+tflint_eks-infra:
+  extends: .tflint_base
+  script:
+    - cd terraform/${TF_ROOT}/environments/${ENV}
+    - tflint --init
+    - tflint --recursive --format=compact
+
+tf_validate_eks-infra:
+  extends: .tf_validate
+
+tf_plan_eks-infra:
   extends: .tf_plan
 
-staging_apply_eks:
+staging_apply_eks-infra:
   extends: .staging_apply
 
-prod_apply_eks:
+prod_apply_eks-infra:
   extends: .prod_apply
