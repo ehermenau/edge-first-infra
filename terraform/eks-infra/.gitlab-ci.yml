@@ -9,6 +9,8 @@ tf_plan_eks:
   parallel:
     matrix:
       - ENV: [staging]
+  environment:
+    name: ${ENV}
   script:
     - terraform plan -out=${ENV}.tfplan
   artifacts:
