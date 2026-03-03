@@ -13,6 +13,7 @@ trigger-vpc:
       when: always
     - changes:
         - terraform/vpc-infra/**/*
+        - .gitlab-ci.yml
 
 trigger-eks:
   stage: triggers
@@ -29,6 +30,7 @@ trigger-eks:
       when: always
     - changes:
         - terraform/eks-infra/**/*
+        - .gitlab-ci.yml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
