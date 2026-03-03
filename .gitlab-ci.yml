@@ -20,7 +20,8 @@ trigger-eks:
     include: terraform/eks-infra/.gitlab-ci.yml
     strategy: depend
   needs:
-    - trigger-vpc
+    - optional: true
+      job: trigger-vpc
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
