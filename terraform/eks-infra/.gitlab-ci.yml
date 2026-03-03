@@ -1,17 +1,14 @@
 include:
   - local: .gitlab-ci/terraform.yml
 
+variables:
+  TF_ROOT: "eks-infra"
+
 tf_plan_eks:
   extends: .tf_plan
-  variables:
-    TF_ROOT: "eks-infra"
 
 staging_apply_eks:
   extends: .staging_apply
-  variables:
-    TF_ROOT: "eks-infra"
 
 prod_apply_eks:
   extends: .prod_apply
-  variables:
-    TF_ROOT: "eks-infra"

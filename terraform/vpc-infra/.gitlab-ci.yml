@@ -1,10 +1,11 @@
 include:
   - local: .gitlab-ci/terraform.yml
 
+variables:
+  TF_ROOT: "vpc-infra"
+
 tflint:
   extends: .tflint_base
-  variables:
-    TF_ROOT: "vpc-infra"
   script:
     - cd terraform/vpc-infra/environments/${ENV}
     - tflint --init
@@ -12,20 +13,12 @@ tflint:
 
 tf_validate:
   extends: .tf_validate
-  variables:
-    TF_ROOT: "vpc-infra"
 
 tf_plan:
   extends: .tf_plan
-  variables:
-    TF_ROOT: "vpc-infra"
 
 staging_apply:
   extends: .staging_apply
-  variables:
-    TF_ROOT: "vpc-infra"
 
 prod_apply:
   extends: .prod_apply
-  variables:
-    TF_ROOT: "vpc-infra"
