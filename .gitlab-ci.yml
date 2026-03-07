@@ -21,6 +21,8 @@ trigger-vpc:
     include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - <<: *ci_change_rule
     - <<: *main_or_merge_rule
     - changes:
@@ -35,6 +37,8 @@ trigger-eks:
     - optional: true
       job: trigger-vpc
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - <<: *ci_change_rule
     - <<: *main_or_merge_rule
     - changes:
