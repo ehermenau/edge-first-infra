@@ -1,5 +1,10 @@
 stages:
   - triggers
+  - destroy-eks
+  - destroy-vpc
+
+include:
+  - local: .gitlab-ci/destroy.yml
 
 .ci_change_rule: &ci_change_rule
   changes:
