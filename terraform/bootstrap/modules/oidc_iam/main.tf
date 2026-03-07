@@ -37,7 +37,8 @@ resource "aws_iam_role_policy" "gitlab_ci_policy" {
           "eks:*",     # Needed for Hub-EKS
           "iam:*",     # Needed to create EKS node roles
           "s3:*",      # Needed for state and artifacts
-          "kms:*"      # Needed for encryption
+          "kms:*",     # Needed for encryption
+          "logs:*"     # Needed for CloudWatch logging
         ]
         Resource = "*"
         # Add a condition to restrict to your specific region
