@@ -1,6 +1,6 @@
 variable "environment" {
   type    = string
-  default = "staging"
+  default = "prod"
 }
 
 variable "aws_role_arn" {
