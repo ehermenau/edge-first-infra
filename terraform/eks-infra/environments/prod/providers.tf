@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket       = "" # Passed in via var 
-    key          = "staging/eks/terraform.tfstate"
+    key          = "prod/eks/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
   }
@@ -27,7 +27,7 @@ provider "aws" {
       Project     = "Edge-First-Infrastructure"
       ManagedBy   = "Terraform"
       Component   = "Control-Plane"
-      Environment = "Staging"
+      Environment = "Prod"
     }
   }
 }

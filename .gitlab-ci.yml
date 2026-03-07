@@ -1,15 +1,36 @@
 stages:
   - triggers
 
+.ci_change_rule: &ci_change_rule
+  changes:
+    - .gitlab-ci.yml
+    - .gitlab-ci/**/*
+
+.main_or_merge_rule: &main_or_merge_rule
+  if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+  when: always
+
 trigger-vpc:
   stage: triggers
   trigger:
     include: terraform/vpc-infra/.gitlab-ci.yml
     strategy: depend
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
+    - <<: *ci_change_rule
+    - <<: *main_or_merge_rule
     - changes:
         - terraform/vpc-infra/**/*
+
+trigger-eks:
+  stage: triggers
+  trigger:
+    include: terraform/eks-infra/.gitlab-ci.yml
+    strategy: depend
+  needs:
+    - optional: true
+      job: trigger-vpc
+  rules:
+    - <<: *ci_change_rule
+    - <<: *main_or_merge_rule
+    - changes:
+        - terraform/eks-infra/**/*

@@ -15,3 +15,9 @@ data "aws_subnets" "private" {
     values = ["1"]
   }
 }
+
+# Fetch the public IP of the workstation running Terraform
+data "http" "workstation_external_ip" {
+  url = "https://checkip.amazonaws.com"
+}
+

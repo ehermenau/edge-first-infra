@@ -13,7 +13,7 @@ resource "aws_iam_role" "gitlab_ci_role" {
         }
         Condition = {
           StringLike = {
-            "gitlab.com:sub" : "project_path:evanhermenau/edge-first-infrastructure:*"
+            "gitlab.com:sub" : "project_path:duo_test2/edge-first-infrastructure:*"
           }
         }
       }
@@ -37,7 +37,8 @@ resource "aws_iam_role_policy" "gitlab_ci_policy" {
           "eks:*",     # Needed for Hub-EKS
           "iam:*",     # Needed to create EKS node roles
           "s3:*",      # Needed for state and artifacts
-          "kms:*"      # Needed for encryption
+          "kms:*",     # Needed for encryption
+          "logs:*"     # Needed for CloudWatch logging
         ]
         Resource = "*"
         # Add a condition to restrict to your specific region
@@ -50,7 +51,7 @@ resource "aws_iam_role_policy" "gitlab_ci_policy" {
 }
 
 resource "gitlab_project_variable" "aws_role_arn" {
-  project = "evanhermenau/edge-first-infrastructure"
+  project = "duo_test2/edge-first-infrastructure"
   key     = "AWS_ROLE_ARN"
   value   = aws_iam_role.gitlab_ci_role.arn
 
