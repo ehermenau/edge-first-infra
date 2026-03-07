@@ -1,0 +1,52 @@
+stages:
+  - destroy-eks
+  - destroy-vpc
+
+.destroy_base:
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
+    TF_VAR_aws_role_arn: $AWS_ROLE_ARN
+  before_script:
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - cd terraform/${TF_ROOT}/environments/${ENV}
+    - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
+
+destroy_eks:
+  extends: .destroy_base
+  stage: destroy-eks
+  variables:
+    TF_ROOT: "eks-infra"
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - terraform destroy -auto-approve
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+
+destroy_vpc:
+  extends: .destroy_base
+  stage: destroy-vpc
+  variables:
+    TF_ROOT: "vpc-infra"
+  parallel:
+    matrix:
+      - ENV: [staging, prod]
+  environment:
+    name: ${ENV}
+  script:
+    - terraform destroy -auto-approve
+  needs:
+    - destroy_eks
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
