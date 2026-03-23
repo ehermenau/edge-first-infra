@@ -15,8 +15,12 @@
 
 ```mermaid
 graph TB
-    subgraph " "
-        A[S3 Backend] --> B[IAM OIDC Provider]
+
+    subgraph "Bootstrap"
+        direction LR
+        A[S3 Backend]
+        B[IAM Role - Gitlab Deployer]
+        J["CI/CD Variables"]
     end
 
     subgraph " "
@@ -25,7 +29,6 @@ graph TB
         D --> E[ArgoCD]
         E --> H[Crossplane]
     end
-
 
     subgraph " "
         H -->|Provisions| I[Spoke VPC]
@@ -40,24 +43,44 @@ graph TB
 
 The project is structured into modular layers to ensure a clean separation of concerns between core networking and compute resources.
 
-- **Bootstrap**: Initialized separately to manage S3 backend buckets and OIDC IAM roles.
-- **VPC Infra**: Multi-AZ networking with `/20` private subnets optimized for EKS pod density.
-- **EKS Infra**: Kubernetes clusters running version **1.35** with **EKS Auto Mode** for managed compute.
-- **EKS Platform**: Security configurations including Hybrid access models and specialized SG rules for kubelet connectivity.
+- **Bootstrap**: Initialized separately to manage:
+  - S3 backend buckets
+  - OIDC IAM roles
+  - Gitlab CICD Variables
+- **VPC Infra**:
+  - Multi-AZ networking
+  - Route 53 internal zones
+- **EKS Infra**:
+  - Kubernetes clusters with **EKS Auto Mode** for managed compute.
+- **EKS Platform**:
+  - Installs ArgoCD on the EKS cluster, using this repository as its root.
 
 ---
 
 ## 🚀 CI/CD Pipeline Structure
 
-The pipeline uses a parent-child trigger architecture to manage dependencies between the VPC and EKS layers.
+The pipeline implements a **Promotion-Based Deployment** model to protect production stability:
 
-### Stages
+1.  **Verification Phase (Feature Branches)**:
+    - Triggered on every commit to a feature branch.
+      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
+    - Triggered on every merge request to the main branch.
+      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
+      - Manual `terraform apply` to **Staging** for integration testing.
+      - _Production apply is strictly disabled at this stage._
 
-1.  **Triggers**: Orchestrates the downstream Terraform deployments.
-2.  **Lint/Validate**: Ensures HCL quality using `tflint` and `terraform validate`.
-3.  **Plan**: Generates execution plans for `staging` and `prod` environments.
-4.  **Apply**: Manual or automatic deployment based on the branch (Main vs. Merge Request).
-5.  **Destroy**: Scheduled cleanup jobs to manage costs.
+2.  **Promotion Phase (Main Branch)**:
+    - Triggered only after a Merge Request is approved and merged.
+    - Re-validates the plan against the current `main` state.
+    - **Staging Apply**: Runs automatically to ensure the environment is synced.
+    - **Prod Apply**: Requires a **Manual Action** in the GitLab UI to execute, serving as the final "sanity check" before pushing to production.
+
+    | Environment        | Trigger Event | Action                 | Flow        | Purpose             |
+    | :----------------- | :------------ | :--------------------- | :---------- | :------------------ |
+    | **Staging & Prod** | Commit        | tflint, validate, plan | Automatic   | Regression Testing  |
+    | **Staging**        | Merge Request | apply                  | Manual Gate | Active Verification |
+    | **Staging**        | Merge to Main | apply                  | Automatic   | Environment Sync    |
+    | **Production**     | Merge to Main | apply                  | Manual Gate | Controlled Release  |
 
 ---
 
@@ -73,46 +96,21 @@ EKS access is managed via **Access Entries**, granting `AmazonEKSClusterAdminPol
 
 - **The GitLab Runner IAM Role**: Uses the `AWS_ROLE_ARN` provided by the bootstrap process.
 - **Designated Admin ARNs**: Defined via `var.admin_user_arn`.
-- **Cluster Creator**: Automatic admin permissions enabled for the creating entity.
-
-### Network Hardening
-
-- **Endpoint Access**: Public access is enabled for management, with private access enabled for internal cluster communication.
-- **Subnet Isolation**: EKS nodes reside in private subnets, while Load Balancers are managed in public subnets via `kubernetes.io/role/elb` tags.
 
 ---
 
-## 🛠 Usage & Local Development
-
-### Prerequisites
-
-- Terraform `~> 1.0`
-- AWS CLI & `kubectl`
-- GitLab Personal Access Token
-
-### Local Cluster Interaction
+## ✅ Post-Deployment
 
 To interact with the EKS cluster locally after a CI deployment:
 
 1.  **Update Kubeconfig**:
     ```bash
-    aws eks update-kubeconfig --region us-east-1 --name efi-staging-eks-cluster
+    aws eks update-kubeconfig --region us-east-1 --name <cluster name>
     ```
 2.  **Verify Access**:
     ```bash
     kubectl get nodes
     ```
-
-### Repository Structure
-
-```text
-.
-├── .gitlab-ci/          # Shared CI templates (Terraform, Destroy)
-├── terraform/
-│   ├── bootstrap/       # S3 State & IAM OIDC setup
-│   ├── vpc-infra/       # Core VPC and Networking
-│   └── eks-infra/       # EKS Cluster and Auto Mode config
-└── .gitlab-ci.yml       # Parent Pipeline definition
 
 ---
 
@@ -137,8 +135,3 @@ To interact with the EKS cluster locally after a CI deployment:
 > Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
 
 ---
-```
-
-```
-
-```
