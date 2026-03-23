@@ -114,6 +114,9 @@ To interact with the EKS cluster locally after a CI deployment:
 
 ---
 
+<details>
+<summary>Architectural Decision Records</summary>
+
 ## 📜 Architectural Decision Records (ADR)
 
 ### ADR 001: Compute Abstraction (Hub vs. Edge)
@@ -135,3 +138,5 @@ To interact with the EKS cluster locally after a CI deployment:
 > Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
 
 ---
+
+</details>
