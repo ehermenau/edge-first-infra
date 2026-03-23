@@ -1,46 +1,40 @@
+# Edge First Infrastructure (EFI)
+
+[![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![GitLab CI](https://img.shields.io/badge/gitlab%20ci-%23181717.svg?style=for-the-badge&logo=gitlab&logoColor=orange)](https://about.gitlab.com/)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Amazon EKS](https://img.shields.io/badge/Amazon%20EKS-FF9900?style=for-the-badge&logo=Amazon%20EKS&logoColor=white)](https://aws.amazon.com/eks/)
+
 ## 📌 Overview
 
 **Edge-First Infrastructure (EFI)** is a reference architecture for geographically distributed workloads. It addresses the trade-offs between centralized cloud management and low-latency edge execution. Compute should reside where the data is born. Control should reside where the humans are.
 
+<details>
+<summary>View Architecture Diagram</summary>
+
 ```mermaid
 graph TB
-    subgraph Management_Hub [Management Hub]
-        direction TB
-        ArgoCD[ArgoCD Control Plane]
-        GitOps[(Git Source of Truth)]
-        S3_State[S3 State & Lockfile]
-        Central_Repo[(Central Data Repository)]
-
-        ArgoCD --> GitOps
+    subgraph " "
+        A[S3 Backend] --> B[IAM OIDC Provider]
     end
 
-    subgraph Edge_Node [Edge]
-        direction TB
-        EKS_Edge[EKS Cluster]
-
-        subgraph Data_Plane [Kernel-Level Data Plane]
-            Cilium[Cilium CNI / eBPF]
-            Longhorn[Longhorn Distributed Storage]
-            Workloads[Edge Workloads]
-        end
-
-        EKS_Edge --> Cilium
-        EKS_Edge --> Longhorn
-        Longhorn --> Workloads
+    subgraph " "
+        B --> C[Hub VPC]
+        C --> D[EKS Cluster]
+        D --> E[ArgoCD]
+        E --> H[Crossplane]
     end
 
-    %% Encrypted Fabric Connection
-    ArgoCD -.->|GitOps Sync| EKS_Edge
-    Cilium ~~~ Management_Hub
-    Workloads -.->|Summarized Telemetry| Central_Repo
 
-    %% Styling
-    classDef blue_space fill:#4169e1,stroke:#333,stroke-width:2px;
-    classDef grey_space fill:#708090,stroke:#333,stroke-width:2px;
+    subgraph " "
+        H -->|Provisions| I[Spoke VPC]
+        I -.->|Connected via| C
+    end
 
-    class Management_Hub blue_space;
-    class Edge_Node grey_space;
 ```
+
+</details>
 
 ## 🏗 Architecture
 
@@ -143,4 +137,8 @@ To interact with the EKS cluster locally after a CI deployment:
 > Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
 
 ---
+```
+
+```
+
 ```
