@@ -36,7 +36,7 @@ resource "aws_s3_bucket_public_access_block" "state" {
 }
 
 resource "gitlab_project_variable" "tf_state_bucket" {
-  project = "duo_test2/edge-first-infrastructure"
+  project = "evanhermenau/edge-first-infrastructure"
   key     = "TF_STATE_BUCKET"
   value   = aws_s3_bucket.state.bucket
 
