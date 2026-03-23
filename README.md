@@ -1,80 +1,121 @@
+# Edge First Infrastructure (EFI)
+
+[![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![GitLab CI](https://img.shields.io/badge/gitlab%20ci-%23181717.svg?style=for-the-badge&logo=gitlab&logoColor=orange)](https://about.gitlab.com/)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Amazon EKS](https://img.shields.io/badge/Amazon%20EKS-FF9900?style=for-the-badge&logo=Amazon%20EKS&logoColor=white)](https://aws.amazon.com/eks/)
+
+## 📌 Overview
+
 **Edge-First Infrastructure (EFI)** is a reference architecture for geographically distributed workloads. It addresses the trade-offs between centralized cloud management and low-latency edge execution. Compute should reside where the data is born. Control should reside where the humans are.
+
+<details>
+<summary>View Architecture Diagram</summary>
 
 ```mermaid
 graph TB
-    subgraph Management_Hub [Management Hub]
-        direction TB
-        ArgoCD[ArgoCD Control Plane]
-        GitOps[(Git Source of Truth)]
-        S3_State[S3 State & Lockfile]
-        Central_Repo[(Central Data Repository)]
 
-        ArgoCD --> GitOps
+    subgraph "Bootstrap"
+        direction LR
+        A[S3 Backend]
+        B[IAM Role - Gitlab Deployer]
+        J["CI/CD Variables"]
     end
 
-    subgraph Edge_Node [Edge]
-        direction TB
-        EKS_Edge[EKS Cluster]
-
-        subgraph Data_Plane [Kernel-Level Data Plane]
-            Cilium[Cilium CNI / eBPF]
-            Longhorn[Longhorn Distributed Storage]
-            Workloads[Edge Workloads]
-        end
-
-        EKS_Edge --> Cilium
-        EKS_Edge --> Longhorn
-        Longhorn --> Workloads
+    subgraph " "
+        B --> C[Hub VPC]
+        C --> D[EKS Cluster]
+        D --> E[ArgoCD]
+        E --> H[Crossplane]
     end
 
-    %% Encrypted Fabric Connection
-    ArgoCD -.->|GitOps Sync| EKS_Edge
-    Cilium ~~~ Management_Hub
-    Workloads -.->|Summarized Telemetry| Central_Repo
+    subgraph " "
+        H -->|Provisions| I[Spoke VPC]
+        I -.->|Connected via| C
+    end
 
-    %% Styling
-    classDef blue_space fill:#4169e1,stroke:#333,stroke-width:2px;
-    classDef grey_space fill:#708090,stroke:#333,stroke-width:2px;
-
-    class Management_Hub blue_space;
-    class Edge_Node grey_space;
 ```
 
----
+</details>
 
-## 🏗 The Architecture
+## 🏗 Architecture
 
-EFI implements a **Hub-and-Spoke** topology across multiple AWS regions, designed to satisfy three core pillars:
+The project is structured into modular layers to ensure a clean separation of concerns between core networking and compute resources.
 
-1.  **Autonomous Survivability:** Edge nodes must continue to process local data and maintain state even during a total hub outage.
-2.  **Kernel-Level Security:** Leveraging **eBPF (Cilium)** to replace `iptables` and sidecar-heavy service meshes with near-zero overhead networking and identity-aware security.
-3.  **Declarative Consistency:** Every piece is governed by **GitOps (ArgoCD)**, ensuring no configuration drift across the global fleet.
-
----
-
-## 🛠 The Tech Stack & "The Why"
-
-| Component          | Choice            | Justification                                                                               |
-| :----------------- | :---------------- | :------------------------------------------------------------------------------------------ |
-| **Cloud Provider** | **AWS**           | Utilizing Multi-Region VPCs and EKS for managed control plane stability.                    |
-| **Networking**     | **Cilium (eBPF)** | High-throughput, low-latency routing; kernel-level observability (Hubble) without sidecars. |
-| **Storage**        | **Longhorn**      | Cloud-native distributed block storage that ensures data persistence at the edge.           |
-| **Automation**     | **Terraform**     | Modular, multi-region IaC using S3-native state locking.                                    |
-| **GitOps**         | **ArgoCD**        | Managing multi-cluster applications via the "App-of-Apps" pattern.                          |
+- **Bootstrap**: Initialized separately to manage:
+  - S3 backend buckets
+  - OIDC IAM roles
+  - Gitlab CICD Variables
+- **VPC Infra**:
+  - Multi-AZ networking
+  - Route 53 internal zones
+- **EKS Infra**:
+  - Kubernetes clusters with **EKS Auto Mode** for managed compute.
+- **EKS Platform**:
+  - Installs ArgoCD on the EKS cluster, using this repository as its root.
 
 ---
 
-## 🧩 System Components
+## 🚀 CI/CD Pipeline Structure
 
-### 1. The Management Hub
+The pipeline implements a **Promotion-Based Deployment** model to protect production stability:
 
-The "Central Nervous System." It hosts **ArgoCD** and the primary data repository. Responsible for global state monitoring and aggregated telemetry.
+1.  **Verification Phase (Feature Branches)**:
+    - Triggered on every commit to a feature branch.
+      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
+    - Triggered on every merge request to the main branch.
+      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
+      - Manual `terraform apply` to **Staging** for integration testing.
+      - _Production apply is strictly disabled at this stage._
 
-### 2. The Edge Node
+2.  **Promotion Phase (Main Branch)**:
+    - Triggered only after a Merge Request is approved and merged.
+    - Re-validates the plan against the current `main` state.
+    - **Staging Apply**: Runs automatically to ensure the environment is synced.
+    - **Prod Apply**: Requires a **Manual Action** in the GitLab UI to execute, serving as the final "sanity check" before pushing to production.
 
-The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is mandatory. Performs real-time data processing, local state persistence via **Longhorn**, and eBPF-driven workload isolation.
+    | Environment        | Trigger Event | Action                 | Flow        | Purpose             |
+    | :----------------- | :------------ | :--------------------- | :---------- | :------------------ |
+    | **Staging & Prod** | Commit        | tflint, validate, plan | Automatic   | Regression Testing  |
+    | **Staging**        | Merge Request | apply                  | Manual Gate | Active Verification |
+    | **Staging**        | Merge to Main | apply                  | Automatic   | Environment Sync    |
+    | **Production**     | Merge to Main | apply                  | Manual Gate | Controlled Release  |
 
 ---
+
+## 🔐 Security & Identity
+
+### OIDC Authentication
+
+We utilize **GitLab OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:evanhermenau/edge-first-infrastructure:*`.
+
+### Cluster Access
+
+EKS access is managed via **Access Entries**, granting `AmazonEKSClusterAdminPolicy` to:
+
+- **The GitLab Runner IAM Role**: Uses the `AWS_ROLE_ARN` provided by the bootstrap process.
+- **Designated Admin ARNs**: Defined via `var.admin_user_arn`.
+
+---
+
+## ✅ Post-Deployment
+
+To interact with the EKS cluster locally after a CI deployment:
+
+1.  **Update Kubeconfig**:
+    ```bash
+    aws eks update-kubeconfig --region us-east-1 --name <cluster name>
+    ```
+2.  **Verify Access**:
+    ```bash
+    kubectl get nodes
+    ```
+
+---
+
+<details>
+<summary>Architectural Decision Records</summary>
 
 ## 📜 Architectural Decision Records (ADR)
 
@@ -97,3 +138,5 @@ The "Workhorse." It hosts the high-impact workloads where sub-10ms latency is ma
 > Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
 
 ---
+
+</details>
