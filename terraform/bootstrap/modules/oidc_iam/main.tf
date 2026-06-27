@@ -50,7 +50,7 @@ resource "aws_iam_role_policy" "github_ci_policy" {
   })
 }
 
-resource "github_project_variable" "aws_role_arn" {
+resource "github_actions_variable" "aws_role_arn" {
   project = "ehermenau/edge-first-infra"
   key     = "AWS_ROLE_ARN"
   value   = aws_iam_role.github_ci_role.arn
