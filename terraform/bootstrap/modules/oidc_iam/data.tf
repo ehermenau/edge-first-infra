@@ -1,4 +1,4 @@
-# Look up the existing GitLab provider by URL
-data "aws_iam_openid_connect_provider" "gitlab" {
-  url = "https://gitlab.com"
+# Look up the existing GitHub provider by URL
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://github.com"
 }

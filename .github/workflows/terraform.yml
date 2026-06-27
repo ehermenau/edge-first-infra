@@ -9,13 +9,13 @@ stages:
     name: hashicorp/terraform:latest
     entrypoint: [""]
   id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
+    GITHUB_OIDC_TOKEN:
+      aud: https://github.com
   variables:
     AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/web_identity_token
     TF_VAR_aws_role_arn: $AWS_ROLE_ARN
   before_script:
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - echo "${GITHUB_OIDC_TOKEN}" > /tmp/web_identity_token
     - cd terraform/${TF_ROOT}/environments/${ENV}
     - terraform init -backend-config="bucket=${TF_STATE_BUCKET}"
 

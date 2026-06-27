@@ -1,6 +1,6 @@
 # The Identity (Who is it?)
-resource "aws_iam_role" "gitlab_ci_role" {
-  name = "efi-${var.environment}-IAM-role-gitlab-deployer"
+resource "aws_iam_role" "github_ci_role" {
+  name = "efi-${var.environment}-IAM-role-github-deployer"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -9,11 +9,11 @@ resource "aws_iam_role" "gitlab_ci_role" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Effect = "Allow"
         Principal = {
-          Federated = data.aws_iam_openid_connect_provider.gitlab.arn
+          Federated = data.aws_iam_openid_connect_provider.github.arn
         }
         Condition = {
           StringLike = {
-            "gitlab.com:sub" : "project_path:evanhermenau/edge-first-infrastructure:*"
+            "github.com:sub" : "project_path:evanhermenau/edge-first-infrastructure:*"
           }
         }
       }
@@ -22,9 +22,9 @@ resource "aws_iam_role" "gitlab_ci_role" {
 }
 
 # The Permission (What can it do?)
-resource "aws_iam_role_policy" "gitlab_ci_policy" {
-  name = "efi-${var.environment}-IAM-policy-gitlab-deployer"
-  role = aws_iam_role.gitlab_ci_role.id
+resource "aws_iam_role_policy" "github_ci_policy" {
+  name = "efi-${var.environment}-IAM-policy-github-deployer"
+  role = aws_iam_role.github_ci_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -50,10 +50,10 @@ resource "aws_iam_role_policy" "gitlab_ci_policy" {
   })
 }
 
-resource "gitlab_project_variable" "aws_role_arn" {
+resource "github_project_variable" "aws_role_arn" {
   project = "evanhermenau/edge-first-infrastructure"
   key     = "AWS_ROLE_ARN"
-  value   = aws_iam_role.gitlab_ci_role.arn
+  value   = aws_iam_role.github_ci_role.arn
 
   environment_scope = var.environment
   protected         = false

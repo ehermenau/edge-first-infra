@@ -6,8 +6,8 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
-    gitlab = {
-      source  = "gitlabhq/gitlab"
+    github = {
+      source  = "githubhq/github"
       version = "~> 18.9.0"
     }
   }

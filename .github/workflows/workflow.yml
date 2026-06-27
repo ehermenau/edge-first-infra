@@ -4,12 +4,12 @@ stages:
   - destroy-vpc
 
 include:
-  - local: .gitlab-ci/destroy.yml
+  - local: .github/workflows/destroy.yml
 
 .ci_change_rule: &ci_change_rule
   changes:
-    - .gitlab-ci.yml
-    - .gitlab-ci/**/*
+    - .github/workflows/workflow.yml
+    - .github/workflows/**/*
 
 .main_or_merge_rule: &main_or_merge_rule
   if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -18,7 +18,7 @@ include:
 trigger-vpc:
   stage: triggers
   trigger:
-    include: terraform/vpc-infra/.gitlab-ci.yml
+    include: terraform/vpc-infra/.github/workflows.yml
     strategy: depend
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -31,7 +31,7 @@ trigger-vpc:
 trigger-eks:
   stage: triggers
   trigger:
-    include: terraform/eks-infra/.gitlab-ci.yml
+    include: terraform/eks-infra/.github/workflows.yml
     strategy: depend
   needs:
     - optional: true

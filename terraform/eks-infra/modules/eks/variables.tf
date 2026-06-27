@@ -8,7 +8,7 @@ variable "environment" {
 }
 
 variable "aws_role_arn" {
-  description = "ARN of the IAM Role used by gitlab CICD"
+  description = "ARN of the IAM Role used by github CICD"
   type        = string
 }
 
