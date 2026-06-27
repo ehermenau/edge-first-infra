@@ -25,3 +25,6 @@ override.tf.json
 # OS-specific garbage
 .DS_Store
 Thumbs.db
+
+# dev environment files
+.vscode/
