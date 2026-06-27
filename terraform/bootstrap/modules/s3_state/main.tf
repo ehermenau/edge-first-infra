@@ -1,6 +1,6 @@
 # The Bucket 
 resource "aws_s3_bucket" "state" {
-  bucket = "efi-${var.environment}-terraform-state"
+  bucket = "efi-${var.environment}-tf-state"
 
   lifecycle {
     prevent_destroy = true

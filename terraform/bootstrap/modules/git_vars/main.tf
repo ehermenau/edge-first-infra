@@ -3,8 +3,15 @@ resource "github_repository_environment" "repo_env" {
   repository  = var.repository
   deployment_branch_policy {
     protected_branches     = var.protected_branches
-    custom_branch_policies = false
+    custom_branch_policies = var.custom_branch_policies
   }
+}
+
+resource "github_repository_environment_deployment_policy" "env_deploy_policy" {
+  count          = var.environment == "staging" ? 1 : 0
+  repository     = var.repository
+  environment    = var.environment
+  branch_pattern = "*"
 }
 
 resource "github_actions_environment_variable" "tf_state_bucket" {

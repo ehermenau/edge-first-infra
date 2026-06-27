@@ -6,14 +6,15 @@ resource "aws_iam_role" "github_ci_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRoleWithWebIdentity"
         Effect = "Allow"
         Principal = {
           Federated = data.aws_iam_openid_connect_provider.github.arn
         }
+        Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
-          StringLike = {
-            "github.com:sub" : "project_path:ehermenau/edge-first-infra:*"
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" : "sts.amazonaws.com",
+            "token.actions.githubusercontent.com:sub" : "repo:${var.github_owner}/${var.repository}:environment:${var.environment}"
           }
         }
       }

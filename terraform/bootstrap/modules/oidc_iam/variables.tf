@@ -6,3 +6,13 @@ variable "environment" {
     error_message = "Environment must be staging or prod."
   }
 }
+
+variable "repository" {
+  description = "GitHub repository name"
+  type        = string
+}
+
+variable "github_owner" {
+  description = "GitHub owner (user or organization)"
+  type        = string
+}

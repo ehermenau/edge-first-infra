@@ -13,7 +13,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "efi-prod-terraform-state"
+    bucket       = "efi-prod-tf-state"
     key          = "prod/bootstrap/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true

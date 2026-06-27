@@ -8,7 +8,17 @@ variable "protected_branches" {
   default = false
 }
 
+variable "custom_branch_policies" {
+  type    = bool
+  default = true
+}
+
 variable "repository" {
   type    = string
-  default = "ehermenau/edge-first-infra"
+  default = "edge-first-infra"
+}
+
+variable "github_owner" {
+  type    = string
+  default = "ehermenau"
 }

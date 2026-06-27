@@ -16,6 +16,14 @@ variable "protected_branches" {
   }
 }
 
+variable "custom_branch_policies" {
+  description = "Whether to enforce custom branch policies for the environment. Set to true for production, false for staging."
+  type        = bool
+  validation {
+    condition     = contains([true, false], var.custom_branch_policies)
+    error_message = "Custom branch policies must be a boolean value."
+  }
+}
 variable "repository" {
   description = "GitHub repository name"
   type        = string
