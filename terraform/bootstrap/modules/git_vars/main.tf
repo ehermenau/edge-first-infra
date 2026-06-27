@@ -11,12 +11,13 @@ resource "github_actions_environment_variable" "tf_state_bucket" {
   repository    = var.repository
   environment   = var.environment
   variable_name = "TF_STATE_BUCKET"
-  value         = aws_s3_bucket.state.bucket
+  value         = var.state_bucket
 }
 
 resource "github_actions_environment_variable" "aws_role_arn" {
   repository    = var.repository
   environment   = var.environment
   variable_name = "AWS_ROLE_ARN"
-  value         = aws_iam_role.github_ci_role.arn
+  value         = var.aws_role_arn
 }
+
