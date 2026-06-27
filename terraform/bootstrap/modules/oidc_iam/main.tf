@@ -13,7 +13,7 @@ resource "aws_iam_role" "github_ci_role" {
         }
         Condition = {
           StringLike = {
-            "github.com:sub" : "project_path:evanhermenau/edge-first-infrastructure:*"
+            "github.com:sub" : "project_path:ehermenau/edge-first-infra:*"
           }
         }
       }
@@ -51,7 +51,7 @@ resource "aws_iam_role_policy" "github_ci_policy" {
 }
 
 resource "github_project_variable" "aws_role_arn" {
-  project = "evanhermenau/edge-first-infrastructure"
+  project = "ehermenau/edge-first-infra"
   key     = "AWS_ROLE_ARN"
   value   = aws_iam_role.github_ci_role.arn
 

@@ -48,7 +48,7 @@ resource "kubernetes_manifest" "root_app" {
     spec = {
       project = "default"
       source = {
-        repoURL        = "https://github.com/evanhermenau/edge-first-infrastructure.git"
+        repoURL        = "https://github.com/ehermenau/edge-first-infra.git"
         targetRevision = "main"
         path           = "gitops/hub/root"
       }

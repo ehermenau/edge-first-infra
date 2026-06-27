@@ -88,7 +88,7 @@ The pipeline implements a **Promotion-Based Deployment** model to protect produc
 
 ### OIDC Authentication
 
-We utilize **GitHub OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:evanhermenau/edge-first-infrastructure:*`.
+We utilize **GitHub OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:ehermenau/edge-first-infra:*`.
 
 ### Cluster Access
 

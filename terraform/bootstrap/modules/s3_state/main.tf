@@ -36,7 +36,7 @@ resource "aws_s3_bucket_public_access_block" "state" {
 }
 
 resource "github_project_variable" "tf_state_bucket" {
-  project = "evanhermenau/edge-first-infrastructure"
+  project = "ehermenau/edge-first-infra"
   key     = "TF_STATE_BUCKET"
   value   = aws_s3_bucket.state.bucket
 
