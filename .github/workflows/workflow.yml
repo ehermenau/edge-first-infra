@@ -34,15 +34,12 @@ jobs:
             eks:
               - 'terraform/eks-infra/**/*'
 
-  # runs on every push and PR, only when changes are detected in the relevant directories
+  # runs on every push and PR
   tf_lint_validate:
     needs: changes
     strategy:
       matrix:
         BASE: [vpc-infra, eks-infra]
-    if: |
-      needs.changes.outputs.vpc == 'true' ||
-      needs.changes.outputs.eks == 'true'
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/${{ matrix.BASE }}
@@ -51,7 +48,7 @@ jobs:
   vpc_plan_pr:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.vpc == 'true' && 
+      needs.changes.outputs.vpc == 'true' &&
       github.event_name == 'pull_request'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
