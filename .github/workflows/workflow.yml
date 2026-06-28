@@ -2,9 +2,6 @@ name: Infra Workflow
 
 on:
   push:
-    branches:
-      - "*" 
-  pull_request:
 
 jobs:
   changes:
