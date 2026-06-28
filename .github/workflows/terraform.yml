@@ -26,3 +26,6 @@ jobs:
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
           tflint --init
           tflint --format compact
+
+      - name: Terraform Init
+        run: terraform init 
