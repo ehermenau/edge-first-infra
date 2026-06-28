@@ -11,11 +11,9 @@ module "oidc_iam" {
 }
 
 module "git_vars" {
-  source                 = "../../modules/git_vars"
-  environment            = var.environment
-  repository             = var.repository
-  protected_branches     = var.protected_branches
-  custom_branch_policies = var.custom_branch_policies
-  state_bucket           = module.s3_state.bucket_name
-  aws_role_arn           = module.oidc_iam.aws_role_arn
+  source       = "../../modules/git_vars"
+  environment  = var.environment
+  repository   = var.repository
+  state_bucket = module.s3_state.bucket_name
+  aws_role_arn = module.oidc_iam.aws_role_arn
 }

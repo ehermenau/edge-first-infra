@@ -3,16 +3,6 @@ variable "environment" {
   default = "prod"
 }
 
-variable "protected_branches" {
-  type    = bool
-  default = true
-}
-
-variable "custom_branch_policies" {
-  type    = bool
-  default = false
-}
-
 variable "repository" {
   type    = string
   default = "edge-first-infra"
