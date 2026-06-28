@@ -23,6 +23,6 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
       - name: tflint
         run: |
-          pwd
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-          tflint
+          tflint --init
+          tflint --format compact

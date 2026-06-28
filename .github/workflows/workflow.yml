@@ -24,7 +24,7 @@ jobs:
             eks:
               - 'terraform/eks-infra/**/*'
 
-  vpc:
+  terraform:
     needs: changes
     strategy:
       matrix:
@@ -32,6 +32,7 @@ jobs:
     if: |
       needs.changes.outputs.workflow == 'true' ||
       needs.changes.outputs.vpc == 'true' ||
+      needs.changes.outputs.eks == 'true' ||
       github.ref == '/refs/heads/main'
     uses: ./.github/workflows/terraform.yml
     with:
