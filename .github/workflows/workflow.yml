@@ -45,7 +45,7 @@ jobs:
   vpc_infra_tf_lint_validate:
     needs: changes
     if: |
-      needs.changes.outputs.vpc-infra ||
+      needs.changes.outputs.vpc-infra == true ||
       github.event.inputs.force_all == true
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
