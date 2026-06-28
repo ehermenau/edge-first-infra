@@ -75,7 +75,7 @@ jobs:
     needs: [changes, tf_lint_validate]
     if: | 
       needs.changes.outputs.vpc == 'true' &&
-      github.ref == '/refs/heads/main' && 
+      github.ref == 'refs/heads/main' && 
       github.event_name == 'push'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -87,7 +87,7 @@ jobs:
     needs: [changes, tf_lint_validate, vpc_staging]
     if: | 
       needs.changes.outputs.eks == 'true' &&
-      github.ref == '/refs/heads/main' && 
+      github.ref == 'refs/heads/main' && 
       github.event_name == 'push' && 
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
     uses: ./.github/workflows/tf_plan_apply.yml
@@ -101,7 +101,7 @@ jobs:
     needs: [changes, vpc_staging]
     if: | 
       needs.changes.outputs.vpc == 'true' &&  
-      github.ref == '/refs/heads/main' &&
+      github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
     uses: ./.github/workflows/tf_plan_apply.yml
@@ -114,7 +114,7 @@ jobs:
     needs: [changes, eks_staging, vpc_prod]
     if: | 
       needs.changes.outputs.eks == 'true' && 
-      github.ref == '/refs/heads/main' &&
+      github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') && 
       (needs.vpc_prod.result == 'success' || needs.vpc_prod.result == 'skipped') 
