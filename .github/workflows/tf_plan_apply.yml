@@ -19,6 +19,7 @@ jobs:
         working-directory: ${{ inputs.TF_ROOT }}/environments/${{ inputs.ENV }}
     env:
       TF_ROOT: ${{ inputs.TF_ROOT }}
+      TF_VAR_admin_user_arn: ${{ secrets.TF_VAR_ADMIN_USER_ARN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,8 +35,6 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -out=${{ inputs.ENV }}.tfplan
-        env:
-          TF_VAR_admin_user_arn: ${{ secrets.TF_VAR_ADMIN_USER_ARN }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve ${{ inputs.ENV }}.tfplan
