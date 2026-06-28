@@ -9,6 +9,10 @@ on:
       ENV:
         required: true
         type: string
+      APPLY:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   tf_plan_apply:
@@ -39,3 +43,4 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve ${{ inputs.ENV }}.tfplan
+        if: ${{ inputs.APPLY }} 

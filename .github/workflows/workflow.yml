@@ -2,12 +2,14 @@ name: Infra Workflow
 
 on:
   push:
+  pull_request:
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
+  # Detect changes in relevant directories
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -32,52 +34,92 @@ jobs:
             eks:
               - 'terraform/eks-infra/**/*'
 
+  # runs on every push and PR, only when changes are detected in the relevant directories
   tf_lint_validate:
     needs: changes
     strategy:
       matrix:
         BASE: [vpc-infra, eks-infra]
+    if: |
+      needs.changes.outputs.vpc == 'true' ||
+      needs.changes.outputs.eks == 'true'
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/${{ matrix.BASE }}
 
-  vpc_staging_tf_plan_apply:
+  # Plan-only, visible on every PR
+  vpc_plan_pr:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.vpc == 'true' || 
-      needs.changes.outputs.eks == 'true'
+      needs.changes.outputs.vpc == 'true' && 
+      github.event_name == 'pull_request'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/vpc-infra
       ENV: staging
+      APPLY: false
 
-  vpc_prod_tf_plan_apply:
+  eks_plan_pr:
     needs: [changes, tf_lint_validate]
     if: | 
-      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.vpc == 'true' || needs.changes.outputs.eks == 'true') &&
-      github.ref == '/refs/heads/main'
-    uses: ./.github/workflows/tf_plan_apply.yml
-    with:
-      TF_ROOT: terraform/vpc-infra
-      ENV: prod 
-
-  eks_staging_tf_plan_apply:
-    needs: [changes, tf_lint_validate, vpc_staging_tf_plan_apply]
-    if: | 
-      needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.eks == 'true'
+      needs.changes.outputs.eks == 'true' && 
+      github.event_name == 'pull_request'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/eks-infra
       ENV: staging
+      APPLY: false
 
-  eks_prod_tf_plan_apply:
-    needs: [changes, tf_lint_validate, vpc_prod_tf_plan_apply]
+  # Apply to staging, only once merged to main
+  vpc_staging:
+    needs: [changes, tf_lint_validate]
     if: | 
-      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.eks == 'true') &&
-      github.ref == '/refs/heads/main'
+      needs.changes.outputs.vpc == 'true' &&
+      github.ref == '/refs/heads/main' && 
+      github.event_name == 'push'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/vpc-infra
+      ENV: staging 
+      APPLY: true
+
+  eks_staging:
+    needs: [changes, tf_lint_validate, vpc_staging]
+    if: | 
+      needs.changes.outputs.eks == 'true' &&
+      github.ref == '/refs/heads/main' && 
+      github.event_name == 'push' && 
+      (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/eks-infra
+      ENV: staging 
+      APPLY: true
+
+  # Apply to prod, only once staging succeeded on main
+  vpc_prod:
+    needs: [changes, vpc_staging]
+    if: | 
+      needs.changes.outputs.vpc == 'true' &&  
+      github.ref == '/refs/heads/main' &&
+      github.event_name == 'push' &&
+      (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/vpc-infra
+      ENV: prod 
+      APPLY: true
+
+  eks_prod:
+    needs: [changes, eks_staging, vpc_prod]
+    if: | 
+      needs.changes.outputs.eks == 'true' && 
+      github.ref == '/refs/heads/main' &&
+      github.event_name == 'push' &&
+      (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') && 
+      (needs.vpc_prod.result == 'success' || needs.vpc_prod.result == 'skipped') 
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/eks-infra
       ENV: prod 
+      APPLY: true
