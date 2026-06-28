@@ -41,22 +41,29 @@ jobs:
             eks-infra:
               - 'terraform/eks-infra/**/*'
 
-  # runs on every push and PR
-  tf_lint_validate:
+  # runs on every push and PR, when changes are detected in the relevant directories, or when force_all is true
+  vpc_infra_tf_lint_validate:
     needs: changes
-    strategy:
-      matrix:
-        BASE: [vpc-infra, eks-infra]
     if: |
-      (needs.changes.outputs.vpc-infra || needs.changes.outputs.eks-infra) ||
+      needs.changes.outputs.vpc-infra ||
       github.event.inputs.force_all == 'true'
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
-      TF_ROOT: terraform/${{ matrix.BASE }}
+      TF_ROOT: terraform/vpc-infra
+
+  # runs on every push and PR, when changes are detected in the relevant directories, or when force_all is true
+  eks_infra_tf_lint_validate:
+    needs: changes
+    if: |
+      needs.changes.outputs.eks-infra ||
+      github.event.inputs.force_all == 'true'
+    uses: ./.github/workflows/tf_lint_validate.yml
+    with:
+      TF_ROOT: terraform/eks-infra
 
   # Plan-only, visible on every PR
   vpc_plan_pr:
-    needs: [changes, tf_lint_validate]
+    needs: [changes, vpc_infra_tf_lint_validate]
     if: | 
       needs.changes.outputs.vpc-infra &&
       github.event_name == 'pull_request'
@@ -67,7 +74,7 @@ jobs:
       APPLY: false
 
   eks_plan_pr:
-    needs: [changes, tf_lint_validate]
+    needs: [changes, eks_infra_tf_lint_validate]
     if: | 
       needs.changes.outputs.eks-infra && 
       github.event_name == 'pull_request'
@@ -79,7 +86,7 @@ jobs:
 
   # Apply to staging, only once merged to main
   vpc_staging:
-    needs: [changes, tf_lint_validate]
+    needs: [changes, vpc_infra_tf_lint_validate]
     if: | 
       (needs.changes.outputs.vpc-infra || github.event.inputs.force_all) && 
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
@@ -91,7 +98,7 @@ jobs:
       APPLY: true
 
   eks_staging:
-    needs: [changes, tf_lint_validate, vpc_staging]
+    needs: [changes, eks_infra_tf_lint_validate, vpc_staging]
     if: | 
       (needs.changes.outputs.eks-infra || github.event.inputs.force_all) &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
