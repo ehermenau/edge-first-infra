@@ -21,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       workflow: ${{ steps.filter.outputs.workflow }}
-      vpc: ${{ steps.filter.outputs.vpc }}
-      eks: ${{ steps.filter.outputs.eks }}
+      vpc-infra: ${{ steps.filter.outputs.vpc-infra }}
+      eks-infra: ${{ steps.filter.outputs.eks-infra }}
     steps:
       - uses: actions/checkout@v4 
         with:
@@ -36,9 +36,9 @@ jobs:
             workflow:
               - '.github/workflows/workflow.yml'
               - '.github/workflows/**/*'
-            vpc:
+            vpc-infra:
               - 'terraform/vpc-infra/**/*'
-            eks:
+            eks-infra:
               - 'terraform/eks-infra/**/*'
 
   # runs on every push and PR
@@ -47,6 +47,9 @@ jobs:
     strategy:
       matrix:
         BASE: [vpc-infra, eks-infra]
+    if: |
+      (needs.changes.outputs.vpc-infra || needs.changes.outputs.eks-infra) ||
+      github.event.inputs.force_all == 'true'
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/${{ matrix.BASE }}
@@ -55,7 +58,7 @@ jobs:
   vpc_plan_pr:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.vpc == 'true' &&
+      needs.changes.outputs.vpc-infra &&
       github.event_name == 'pull_request'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -66,7 +69,7 @@ jobs:
   eks_plan_pr:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.eks == 'true' && 
+      needs.changes.outputs.eks-infra && 
       github.event_name == 'pull_request'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -78,7 +81,7 @@ jobs:
   vpc_staging:
     needs: [changes, tf_lint_validate]
     if: | 
-      (needs.changes.outputs.vpc == 'true' || github.event.inputs.force_all) && 
+      (needs.changes.outputs.vpc-infra || github.event.inputs.force_all) && 
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main'  
     uses: ./.github/workflows/tf_plan_apply.yml
@@ -90,7 +93,7 @@ jobs:
   eks_staging:
     needs: [changes, tf_lint_validate, vpc_staging]
     if: | 
-      (needs.changes.outputs.eks == 'true' || github.event.inputs.force_all) &&
+      (needs.changes.outputs.eks-infra || github.event.inputs.force_all) &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' && 
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
@@ -104,7 +107,7 @@ jobs:
   vpc_prod:
     needs: [changes, vpc_staging]
     if: | 
-      (needs.changes.outputs.vpc == 'true' || github.event.inputs.force_all) &&  
+      (needs.changes.outputs.vpc-infra || github.event.inputs.force_all) &&  
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
@@ -117,7 +120,7 @@ jobs:
   eks_prod:
     needs: [changes, eks_staging, vpc_prod]
     if: | 
-      (needs.changes.outputs.eks == 'true' || github.event.inputs.force_all) &&
+      (needs.changes.outputs.eks-infra || github.event.inputs.force_all) &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
       (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') && 
