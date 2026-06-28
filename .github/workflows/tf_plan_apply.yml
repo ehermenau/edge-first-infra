@@ -20,7 +20,7 @@ jobs:
     env:
       TF_ROOT: ${{ inputs.TF_ROOT }}
       TF_VAR_admin_user_arn: ${{ vars.TF_VAR_ADMIN_USER_ARN }}
-      TF_VAR_aws_role_arn: ${{ vars.TF_VAR_AWS_ROLE_ARN }}
+      TF_VAR_aws_role_arn: ${{ vars.AWS_ROLE_ARN }}
     steps:
       - uses: actions/checkout@v4
 
