@@ -26,10 +26,13 @@ jobs:
 
   vpc:
     needs: changes
+    strategy:
+      matrix:
+        BASE: [vpc-infra, eks-infra]
     if: |
       needs.changes.outputs.workflow == 'true' ||
       needs.changes.outputs.vpc == 'true' ||
       github.ref == '/refs/heads/main'
     uses: ./.github/workflows/terraform.yml
     with:
-      TF_ROOT: terraform/vpc-infra
+      TF_ROOT: terraform/${{ matrix.BASE }}
