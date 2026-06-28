@@ -61,3 +61,23 @@ jobs:
     with:
       TF_ROOT: terraform/vpc-infra
       ENV: prod 
+
+  eks_staging_tf_plan_apply:
+    needs: [changes, tf_lint_validate]
+    if: | 
+      needs.changes.outputs.workflow == 'true' ||
+      needs.changes.outputs.eks == 'true'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/eks-infra
+      ENV: staging
+
+  eks_prod_tf_plan_apply:
+    needs: [changes, tf_lint_validate]
+    if: | 
+      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.eks == 'true') &&
+      github.ref == '/refs/heads/main'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/eks-infra
+      ENV: prod 
