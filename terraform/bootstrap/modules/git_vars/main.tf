@@ -17,3 +17,8 @@ resource "github_actions_environment_variable" "aws_role_arn" {
   value         = var.aws_role_arn
 }
 
+resource "github_actions_secret" "admin_user_arn" {
+  repository  = var.repository
+  secret_name = "TF_VAR_admin_user_arn"
+  value       = data.aws_iam_user.admin.arn
+}
