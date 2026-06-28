@@ -3,6 +3,13 @@ name: Infra Workflow
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: 'Run all environments regardless of detected changes'
+        type: boolean
+        default: false
+
 
 permissions:
   id-token: write
@@ -71,9 +78,9 @@ jobs:
   vpc_staging:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.vpc == 'true' &&
-      github.ref == 'refs/heads/main' && 
-      github.event_name == 'push'
+      (needs.changes.outputs.vpc == 'true' || github.event.inputs.force_all) && 
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
+      github.ref == 'refs/heads/main'  
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/vpc-infra
@@ -83,9 +90,9 @@ jobs:
   eks_staging:
     needs: [changes, tf_lint_validate, vpc_staging]
     if: | 
-      needs.changes.outputs.eks == 'true' &&
+      (needs.changes.outputs.eks == 'true' || github.event.inputs.force_all) &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' && 
-      github.event_name == 'push' && 
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -97,9 +104,9 @@ jobs:
   vpc_prod:
     needs: [changes, vpc_staging]
     if: | 
-      needs.changes.outputs.vpc == 'true' &&  
+      (needs.changes.outputs.vpc == 'true' || github.event.inputs.force_all) &&  
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       (needs.vpc_staging.result == 'success' || needs.vpc_staging.result == 'skipped')
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -110,9 +117,9 @@ jobs:
   eks_prod:
     needs: [changes, eks_staging, vpc_prod]
     if: | 
-      needs.changes.outputs.eks == 'true' && 
+      (needs.changes.outputs.eks == 'true' || github.event.inputs.force_all) &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') && 
       (needs.vpc_prod.result == 'success' || needs.vpc_prod.result == 'skipped') 
     uses: ./.github/workflows/tf_plan_apply.yml
