@@ -12,6 +12,9 @@ jobs:
     strategy:
       matrix:
         ENV: [staging, prod]
+    permissions:
+      id-token: write
+      contents: read
     environment: ${{ matrix.ENV }}
     runs-on: ubuntu-latest
     defaults:
@@ -21,6 +24,12 @@ jobs:
       TF_ROOT: ${{ inputs.TF_ROOT }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
       - uses: hashicorp/setup-terraform@v3
       - name: tflint
         run: |
