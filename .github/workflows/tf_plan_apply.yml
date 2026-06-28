@@ -34,6 +34,8 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -out=${{ inputs.ENV }}.tfplan
+        env:
+          TF_VAR_admin_user_arn: ${{ secrets.TF_VAR_ADMIN_USER_ARN }}
 
       - name: Terraform Apply
         run: terraform apply -auto-approve ${{ inputs.ENV }}.tfplan
