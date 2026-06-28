@@ -28,7 +28,7 @@ jobs:
             eks:
               - 'terraform/eks-infra/**/*'
 
-  terraform:
+  tf_lint_validate:
     needs: changes
     strategy:
       matrix:
@@ -38,6 +38,17 @@ jobs:
       needs.changes.outputs.vpc == 'true' ||
       needs.changes.outputs.eks == 'true' ||
       github.ref == '/refs/heads/main'
-    uses: ./.github/workflows/terraform.yml
+    uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/${{ matrix.BASE }}
+
+  vpc_tf_plan_apply:
+    needs: [changes, tf_lint_validate]
+    if: | 
+      needs.changes.outputs.workflow == 'true' ||
+      needs.changes.outputs.vpc == 'true' ||
+      needs.changes.outputs.eks == 'true' ||
+      github.ref == '/refs/heads/main'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    with:
+      TF_ROOT: terraform/vpc-infra

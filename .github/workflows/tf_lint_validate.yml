@@ -1,4 +1,4 @@
-name: Terraform Pipeline
+name: Terraform Lint & Validate
 
 on:
   workflow_call:
@@ -8,7 +8,7 @@ on:
         type: string 
 
 jobs:
-  terraform:
+  tf_lint_validate:
     strategy:
       matrix:
         ENV: [staging, prod]
@@ -39,6 +39,3 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -out=${{ matrix.ENV }}.tfplan
