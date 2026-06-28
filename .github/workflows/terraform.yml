@@ -9,10 +9,13 @@ on:
 
 jobs:
   terraform:
+    strategy:
+      matrix:
+        ENV: [staging, prod]
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ inputs.TF_ROOT }} 
+        working-directory: ${{ inputs.TF_ROOT }}/environments/${{ matrix.ENV }}
     env:
       TF_ROOT: ${{ inputs.TF_ROOT }}
     steps:
@@ -22,4 +25,3 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
           tflint
-          pwd
