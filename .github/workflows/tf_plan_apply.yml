@@ -1,4 +1,4 @@
-name: Terraform Lint & Validate
+name: Terraform Plan & Apply
 
 on:
   workflow_call:
