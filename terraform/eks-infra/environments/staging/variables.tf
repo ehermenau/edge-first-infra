@@ -1,3 +1,5 @@
+# adding comment to test github actions logic
+
 variable "environment" {
   type    = string
   default = "staging"
