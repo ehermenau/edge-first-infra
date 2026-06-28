@@ -3,7 +3,7 @@ name: Infra Workflow
 on:
   push:
     branches:
-      - main
+      - "*" 
   pull_request:
 
 jobs:
@@ -31,5 +31,4 @@ jobs:
       github.event_name == 'pull_request' ||
       needs.changes.outputs.relevant == 'true' 
     steps:
-      - run: echo "introducting changes to trigger the workflow..."
       - run: echo "relevant changes detected, running tests..."
