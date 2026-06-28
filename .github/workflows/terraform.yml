@@ -1,0 +1,24 @@
+name: Terraform Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      TF_ROOT:
+        required: true
+        type: string 
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.TF_ROOT }} 
+    env:
+      TF_ROOT: ${{ inputs.TF_ROOT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          tflint

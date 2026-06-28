@@ -7,25 +7,29 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      relevant: ${{ steps.filter.outputs.relevant }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+      vpc: ${{ steps.filter.outputs.vpc }}
+      eks: ${{ steps.filter.outputs.eks }}
     steps:
       - uses: actions/checkout@v4 
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: | 
-            relevant:
+            workflow:
               - '.github/workflows/workflow.yml'
               - '.github/workflows/**/*'
+            vpc:
               - 'terraform/vpc-infra/**/*'
+            eks:
               - 'terraform/eks-infra/**/*'
 
-  test_job:
+  vpc:
     needs: changes
-    runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/main' || 
-      github.event_name == 'pull_request' ||
-      needs.changes.outputs.relevant == 'true' 
-    steps:
-      - run: echo "relevant changes detected, running tests..."
+      needs.changes.outputs.workflow == 'true' ||
+      needs.changes.outputs.vpc == 'true' ||
+      github.ref == '/refs/heads/main'
+    uses: ./.github/workflows/terraform.yml
+    with:
+      TF_ROOT: terraform/vpc-infra
