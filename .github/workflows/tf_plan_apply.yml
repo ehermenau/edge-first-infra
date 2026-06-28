@@ -1,0 +1,46 @@
+name: Terraform Lint & Validate
+
+on:
+  workflow_call:
+    inputs:
+      TF_ROOT:
+        required: true
+        type: string 
+      ENV:
+        required: true
+        type: string
+      APPLY:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  tf_plan_apply:
+    environment: ${{ inputs.ENV }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.TF_ROOT }}/environments/${{ inputs.ENV }}
+    env:
+      TF_ROOT: ${{ inputs.TF_ROOT }}
+      TF_VAR_admin_user_arn: ${{ vars.TF_VAR_ADMIN_USER_ARN }}
+      TF_VAR_aws_role_arn: ${{ vars.AWS_ROLE_ARN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: Terraform Plan
+        run: terraform plan -out=${{ inputs.ENV }}.tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve ${{ inputs.ENV }}.tfplan
+        if: ${{ inputs.APPLY }} 

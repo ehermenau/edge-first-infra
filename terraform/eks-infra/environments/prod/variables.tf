@@ -5,7 +5,7 @@ variable "environment" {
 
 variable "aws_role_arn" {
   type        = string
-  description = "The IAM Role ARN used by the GitLab Runner"
+  description = "The IAM Role ARN used by the GitHub Runner"
 }
 
 variable "admin_user_arn" {

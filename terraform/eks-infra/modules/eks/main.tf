@@ -28,7 +28,7 @@ module "eks" {
         }
       }
     }
-    gitlab_runner = {
+    github_runner = {
       principal_arn = var.aws_role_arn
       policy_associations = {
         admin = {

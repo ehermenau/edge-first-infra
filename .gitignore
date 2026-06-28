@@ -18,10 +18,13 @@ override.tf.json
 *_override.tf.json
 
 # Credentials and sensitive shells
-.env
+.env*
 .aws/
 .ssh/
 
 # OS-specific garbage
 .DS_Store
 Thumbs.db
+
+# dev environment files
+.vscode/

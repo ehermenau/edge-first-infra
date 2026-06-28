@@ -1,5 +1,5 @@
 include:
-  - local: "terraform/vpc-infra/.gitlab-ci.yml"
+  - local: "terraform/vpc-infra/.github/workflows.yml"
 
 tf_plan_eks:
   extends: .terraform_base

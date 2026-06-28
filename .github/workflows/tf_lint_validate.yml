@@ -1,0 +1,41 @@
+name: Terraform Lint & Validate
+
+on:
+  workflow_call:
+    inputs:
+      TF_ROOT:
+        required: true
+        type: string 
+
+jobs:
+  tf_lint_validate:
+    strategy:
+      matrix:
+        ENV: [staging, prod]
+    environment: ${{ matrix.ENV }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.TF_ROOT }}/environments/${{ matrix.ENV }}
+    env:
+      TF_ROOT: ${{ inputs.TF_ROOT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+      - uses: hashicorp/setup-terraform@v3
+      - name: tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          tflint --init
+          tflint --format compact
+
+      - name: Terraform Init
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: Terraform Validate
+        run: terraform validate

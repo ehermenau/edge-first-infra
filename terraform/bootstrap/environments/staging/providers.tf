@@ -6,14 +6,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
-    gitlab = {
-      source  = "gitlabhq/gitlab"
-      version = "~> 18.9.0"
+    github = {
+      source  = "integrations/github"
+      version = "6.12.1"
     }
   }
 
   backend "s3" {
-    bucket       = "efi-staging-terraform-state"
+    bucket       = "efi-staging-tf-state"
     key          = "staging/bootstrap/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true

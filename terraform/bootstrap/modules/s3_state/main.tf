@@ -1,6 +1,6 @@
 # The Bucket 
 resource "aws_s3_bucket" "state" {
-  bucket = "efi-${var.environment}-terraform-state"
+  bucket = "efi-${var.environment}-tf-state"
 
   lifecycle {
     prevent_destroy = true
@@ -33,14 +33,4 @@ resource "aws_s3_bucket_public_access_block" "state" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
-}
-
-resource "gitlab_project_variable" "tf_state_bucket" {
-  project = "evanhermenau/edge-first-infrastructure"
-  key     = "TF_STATE_BUCKET"
-  value   = aws_s3_bucket.state.bucket
-
-  environment_scope = var.environment
-  protected         = false
-  masked            = true
 }

@@ -2,7 +2,7 @@
 
 [![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![GitLab CI](https://img.shields.io/badge/gitlab%20ci-%23181717.svg?style=for-the-badge&logo=gitlab&logoColor=orange)](https://about.gitlab.com/)
+[![GitHub CI](https://img.shields.io/badge/github%20ci-%23181717.svg?style=for-the-badge&logo=github&logoColor=orange)](https://about.github.com/)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![Amazon EKS](https://img.shields.io/badge/Amazon%20EKS-FF9900?style=for-the-badge&logo=Amazon%20EKS&logoColor=white)](https://aws.amazon.com/eks/)
 
@@ -19,7 +19,7 @@ graph TB
     subgraph "Bootstrap"
         direction LR
         A[S3 Backend]
-        B[IAM Role - Gitlab Deployer]
+        B[IAM Role - Github Deployer]
         J["CI/CD Variables"]
     end
 
@@ -46,7 +46,7 @@ The project is structured into modular layers to ensure a clean separation of co
 - **Bootstrap**: Initialized separately to manage:
   - S3 backend buckets
   - OIDC IAM roles
-  - Gitlab CICD Variables
+  - Github CICD Variables
 - **VPC Infra**:
   - Multi-AZ networking
   - Route 53 internal zones
@@ -73,7 +73,7 @@ The pipeline implements a **Promotion-Based Deployment** model to protect produc
     - Triggered only after a Merge Request is approved and merged.
     - Re-validates the plan against the current `main` state.
     - **Staging Apply**: Runs automatically to ensure the environment is synced.
-    - **Prod Apply**: Requires a **Manual Action** in the GitLab UI to execute, serving as the final "sanity check" before pushing to production.
+    - **Prod Apply**: Requires a **Manual Action** in the GitHub UI to execute, serving as the final "sanity check" before pushing to production.
 
     | Environment        | Trigger Event | Action                 | Flow        | Purpose             |
     | :----------------- | :------------ | :--------------------- | :---------- | :------------------ |
@@ -88,13 +88,13 @@ The pipeline implements a **Promotion-Based Deployment** model to protect produc
 
 ### OIDC Authentication
 
-We utilize **GitLab OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:evanhermenau/edge-first-infrastructure:*`.
+We utilize **GitHub OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:ehermenau/edge-first-infra:*`.
 
 ### Cluster Access
 
 EKS access is managed via **Access Entries**, granting `AmazonEKSClusterAdminPolicy` to:
 
-- **The GitLab Runner IAM Role**: Uses the `AWS_ROLE_ARN` provided by the bootstrap process.
+- **The GitHub Runner IAM Role**: Uses the `AWS_ROLE_ARN` provided by the bootstrap process.
 - **Designated Admin ARNs**: Defined via `var.admin_user_arn`.
 
 ---
