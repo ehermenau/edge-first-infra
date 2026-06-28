@@ -46,9 +46,7 @@ jobs:
     needs: [changes, tf_lint_validate]
     if: | 
       needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.vpc == 'true' ||
-      needs.changes.outputs.eks == 'true' ||
-      github.ref == '/refs/heads/main'
+      needs.changes.outputs.vpc == 'true'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/vpc-infra
@@ -57,9 +55,7 @@ jobs:
   vpc_prod_tf_plan_apply:
     needs: [changes, tf_lint_validate]
     if: | 
-      needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.vpc == 'true' ||
-      needs.changes.outputs.eks == 'true' ||
+      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.vpc == 'true') &&
       github.ref == '/refs/heads/main'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:

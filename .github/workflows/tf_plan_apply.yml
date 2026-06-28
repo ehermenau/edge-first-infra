@@ -34,3 +34,6 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -out=${{ inputs.ENV }}.tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve ${{ inputs.ENV }}.tfplan
