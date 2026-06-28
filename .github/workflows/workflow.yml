@@ -37,11 +37,6 @@ jobs:
     strategy:
       matrix:
         BASE: [vpc-infra, eks-infra]
-    if: |
-      needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.vpc == 'true' ||
-      needs.changes.outputs.eks == 'true' ||
-      github.ref == '/refs/heads/main'
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/${{ matrix.BASE }}
@@ -50,7 +45,8 @@ jobs:
     needs: [changes, tf_lint_validate]
     if: | 
       needs.changes.outputs.workflow == 'true' ||
-      needs.changes.outputs.vpc == 'true'
+      needs.changes.outputs.vpc == 'true' || 
+      needs.changes.outputs.eks == 'true'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/vpc-infra
@@ -59,7 +55,7 @@ jobs:
   vpc_prod_tf_plan_apply:
     needs: [changes, tf_lint_validate]
     if: | 
-      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.vpc == 'true') &&
+      (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.vpc == 'true' || needs.changes.outputs.eks == 'true') &&
       github.ref == '/refs/heads/main'
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
@@ -77,7 +73,7 @@ jobs:
       ENV: staging
 
   eks_prod_tf_plan_apply:
-    needs: [changes, tf_lint_validate]
+    needs: [changes, tf_lint_validate, vpc_prod_tf_plan_apply]
     if: | 
       (needs.changes.outputs.workflow == 'true' || needs.changes.outputs.eks == 'true') &&
       github.ref == '/refs/heads/main'
