@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         ENV: [staging, prod]
+    environment: ${{ matrix.ENV }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,4 +29,4 @@ jobs:
           tflint --format compact
 
       - name: Terraform Init
-        run: terraform init 
+        run: terraform init -backend-config=${{ vars.TF_STATE_BUCKET }}
