@@ -12,9 +12,6 @@ jobs:
     strategy:
       matrix:
         ENV: [staging, prod]
-    permissions:
-      id-token: write
-      contents: read
     environment: ${{ matrix.ENV }}
     runs-on: ubuntu-latest
     defaults:

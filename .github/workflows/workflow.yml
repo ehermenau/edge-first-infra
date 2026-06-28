@@ -3,6 +3,10 @@ name: Infra Workflow
 on:
   push:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
