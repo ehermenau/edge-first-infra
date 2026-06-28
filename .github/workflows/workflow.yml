@@ -63,7 +63,7 @@ jobs:
       ENV: prod 
 
   eks_staging_tf_plan_apply:
-    needs: [changes, tf_lint_validate]
+    needs: [changes, tf_lint_validate, vpc_staging_tf_plan_apply]
     if: | 
       needs.changes.outputs.workflow == 'true' ||
       needs.changes.outputs.eks == 'true'
