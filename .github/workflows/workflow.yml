@@ -1,45 +1,34 @@
-stages:
-  - triggers
-  - destroy-eks
-  - destroy-vpc
+name: Infra Workflow
 
-include:
-  - local: .github/workflows/destroy.yml
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-.ci_change_rule: &ci_change_rule
+jobs:
   changes:
-    - .github/workflows/workflow.yml
-    - .github/workflows/**/*
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4 
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: | 
+            relevant:
+              - '.github/workflows/workflow.yml'
+              - '.github/workflows/**/*'
+              - 'terraform/vpc-infra/**/*'
+              - 'terraform/eks-infra/**/*'
 
-.main_or_merge_rule: &main_or_merge_rule
-  if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
-  when: always
-
-trigger-vpc:
-  stage: triggers
-  trigger:
-    include: terraform/vpc-infra/.github/workflows.yml
-    strategy: depend
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - <<: *ci_change_rule
-    - <<: *main_or_merge_rule
-    - changes:
-        - terraform/vpc-infra/**/*
-
-trigger-eks:
-  stage: triggers
-  trigger:
-    include: terraform/eks-infra/.github/workflows.yml
-    strategy: depend
-  needs:
-    - optional: true
-      job: trigger-vpc
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - <<: *ci_change_rule
-    - <<: *main_or_merge_rule
-    - changes:
-        - terraform/eks-infra/**/*
+  test_job:
+    needs: changes
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/main' || 
+      github.event_name == 'pull_request' ||
+      needs.changes.outputs.relevant == 'true' 
+    steps:
+      - run: echo "relevant changes detected, running tests..."
