@@ -29,4 +29,4 @@ jobs:
           tflint --format compact
 
       - name: Terraform Init
-        run: terraform init -backend-config=${{ vars.TF_STATE_BUCKET }}
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
