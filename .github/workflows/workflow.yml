@@ -46,17 +46,17 @@ jobs:
     needs: changes
     if: |
       needs.changes.outputs.vpc-infra == true ||
-      github.event.inputs.force_all == true 
+      github.event.inputs.force_all == 'true' 
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/vpc-infra
 
-  # runs on every push and PR, when changes are detected in the relevant directories, or when force_all is true
+  # runs on every push and PR, when changes are detected in the relevant directories, or when force_all true
   eks_infra_tf_lint_validate:
     needs: changes
     if: |
       needs.changes.outputs.eks-infra == true ||
-      github.event.inputs.force_all == true 
+      github.event.inputs.force_all == 'true' 
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/eks-infra
