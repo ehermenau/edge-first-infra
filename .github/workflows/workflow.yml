@@ -46,7 +46,7 @@ jobs:
     needs: changes
     if: |
       needs.changes.outputs.vpc-infra ||
-      github.event.inputs.force_all 
+      github.event.inputs.force_all == true
     uses: ./.github/workflows/tf_lint_validate.yml
     with:
       TF_ROOT: terraform/vpc-infra
