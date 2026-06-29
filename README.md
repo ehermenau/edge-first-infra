@@ -2,7 +2,7 @@
 
 [![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![GitHub CI](https://img.shields.io/badge/github%20ci-%23181717.svg?style=for-the-badge&logo=github&logoColor=orange)](https://about.github.com/)
+[![GitHub Actions](https://img.shields.io/badge/github%20ci-%23181717.svg?style=for-the-badge&logo=github&logoColor=orange)](https://about.github.com/)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![Amazon EKS](https://img.shields.io/badge/Amazon%20EKS-FF9900?style=for-the-badge&logo=Amazon%20EKS&logoColor=white)](https://aws.amazon.com/eks/)
 
@@ -20,7 +20,7 @@ graph TB
         direction LR
         A[S3 Backend]
         B[IAM Role - Github Deployer]
-        J["CI/CD Variables"]
+        J["GitHub Variables"]
     end
 
     subgraph " "
@@ -46,7 +46,7 @@ The project is structured into modular layers to ensure a clean separation of co
 - **Bootstrap**: Initialized separately to manage:
   - S3 backend buckets
   - OIDC IAM roles
-  - Github CICD Variables
+  - Github Actions Variables
 - **VPC Infra**:
   - Multi-AZ networking
   - Route 53 internal zones
@@ -57,7 +57,7 @@ The project is structured into modular layers to ensure a clean separation of co
 
 ---
 
-## 🚀 CI/CD Pipeline Structure
+## 🚀 Workflow Structure
 
 The pipeline implements a **Promotion-Based Deployment** model to protect production stability:
 
@@ -101,7 +101,7 @@ EKS access is managed via **Access Entries**, granting `AmazonEKSClusterAdminPol
 
 ## ✅ Post-Deployment
 
-To interact with the EKS cluster locally after a CI deployment:
+To interact with the EKS cluster locally after a deployment:
 
 1.  **Update Kubeconfig**:
     ```bash
