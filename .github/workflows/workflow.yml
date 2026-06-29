@@ -88,6 +88,7 @@ jobs:
   vpc_staging:
     needs: [changes, vpc_infra_tf_lint_validate]
     if: | 
+      always() &&
       (needs.changes.outputs.vpc-infra == 'true' || github.event.inputs.force_all == 'true') && 
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main'  
@@ -100,6 +101,7 @@ jobs:
   eks_staging:
     needs: [changes, eks_infra_tf_lint_validate, vpc_staging]
     if: | 
+      always() &&
       (needs.changes.outputs.eks-infra == 'true' || github.event.inputs.force_all == 'true') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' && 
@@ -114,6 +116,7 @@ jobs:
   vpc_prod:
     needs: [changes, vpc_staging]
     if: | 
+      always() &&
       (needs.changes.outputs.vpc-infra == 'true' || github.event.inputs.force_all == 'true') &&  
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
@@ -127,6 +130,7 @@ jobs:
   eks_prod:
     needs: [changes, eks_staging, vpc_prod]
     if: | 
+      always() &&
       (needs.changes.outputs.eks-infra == 'true' || github.event.inputs.force_all == 'true') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
       github.ref == 'refs/heads/main' &&
