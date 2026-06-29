@@ -2,7 +2,7 @@
 
 [![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![GitHub Actions](https://img.shields.io/badge/github%20ci-%23181717.svg?style=for-the-badge&logo=github&logoColor=orange)](https://about.github.com/)
+[![GitHub CI](https://img.shields.io/badge/github%20ci-%23181717.svg?style=for-the-badge&logo=github&logoColor=orange)](https://about.github.com/)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![Amazon EKS](https://img.shields.io/badge/Amazon%20EKS-FF9900?style=for-the-badge&logo=Amazon%20EKS&logoColor=white)](https://aws.amazon.com/eks/)
 
