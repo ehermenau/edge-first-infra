@@ -3,7 +3,9 @@ name: Infra Destroy Workflow
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 9 * * *' # Runs every day at midnight
+    - cron: '0 14 * * *' 
+    - cron: '0 13 * * *' 
+    - cron: '0 9 * * *' 
 
 permissions:
     id-token: write
