@@ -1,6 +1,9 @@
 name: Infra Destroy Workflow
 
 on:
+  push:
+    branches:
+      - "task/add_destroy_workflow"
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight
