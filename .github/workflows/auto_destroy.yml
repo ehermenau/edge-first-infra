@@ -1,0 +1,30 @@
+name: Infra Destroy Workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+  eks_destroy:
+    strategy:
+      matrix:
+        ENV: [staging, prod]
+    uses: ./.github/workflows/tf_destroy.yml
+    with: 
+      TF_ROOT: terraform/eks-infra
+      ENV: ${{ matrix.ENV }}
+
+  vpc_destroy:
+    strategy:
+      matrix:
+        ENV: [staging, prod]
+    needs: [eks_destroy]
+    uses: ./.github/workflows/tf_destroy.yml
+    with: 
+      TF_ROOT: terraform/vpc-infra
+      ENV: ${{ matrix.ENV }}
