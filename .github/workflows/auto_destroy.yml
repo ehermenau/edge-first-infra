@@ -6,6 +6,7 @@ on:
     - cron: '0 14 * * *' 
     - cron: '0 13 * * *' 
     - cron: '0 9 * * *' 
+    - cron: '0 3 * * *' 
 
 permissions:
     id-token: write
