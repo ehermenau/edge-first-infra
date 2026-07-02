@@ -47,6 +47,7 @@ The project is structured into modular layers to ensure a clean separation of co
   - S3 backend buckets
   - OIDC IAM roles
   - Github Actions Variables
+  - Github Environments
 - **VPC Infra**:
   - Multi-AZ networking
   - Route 53 internal zones
@@ -61,26 +62,21 @@ The project is structured into modular layers to ensure a clean separation of co
 
 The pipeline implements a **Promotion-Based Deployment** model to protect production stability:
 
-1.  **Verification Phase (Feature Branches)**:
-    - Triggered on every commit to a feature branch.
-      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
-    - Triggered on every merge request to the main branch.
-      - `tflint`, `terraform validate`, and `terraform plan` for **Staging** and **Prod** environments.
-      - Manual `terraform apply` to **Staging** for integration testing.
-      - _Production apply is strictly disabled at this stage._
+1.  **Verification & Gated Promotion**:
+    - Triggered on every push.
+      - `tflint` and `terraform validate` for **Staging** and **Prod** environments.
+    - Triggered on every pull request.
+      - `terraform plan` for **Staging** environment.
+    - Triggered on every merge to the main branch.
+      - `terraform apply` for **Staging** environment.
+      - `terraform plan` & `terraform apply`for **Prod** environment, after Staging succeeds.
 
-2.  **Promotion Phase (Main Branch)**:
-    - Triggered only after a Merge Request is approved and merged.
-    - Re-validates the plan against the current `main` state.
-    - **Staging Apply**: Runs automatically to ensure the environment is synced.
-    - **Prod Apply**: Requires a **Manual Action** in the GitHub UI to execute, serving as the final "sanity check" before pushing to production.
-
-    | Environment        | Trigger Event | Action                 | Flow        | Purpose             |
-    | :----------------- | :------------ | :--------------------- | :---------- | :------------------ |
-    | **Staging & Prod** | Commit        | tflint, validate, plan | Automatic   | Regression Testing  |
-    | **Staging**        | Merge Request | apply                  | Manual Gate | Active Verification |
-    | **Staging**        | Merge to Main | apply                  | Automatic   | Environment Sync    |
-    | **Production**     | Merge to Main | apply                  | Manual Gate | Controlled Release  |
+    | Environment        | Trigger Event | Action           | Flow                  | Purpose             |
+    | :----------------- | :------------ | :--------------- | :-------------------- | :------------------ |
+    | **Staging & Prod** | Push          | tflint, validate | Automatic             | Regression Testing  |
+    | **Staging**        | Pull Request  | plan             | Automatic             | Active Verification |
+    | **Staging**        | Pull to Main  | apply            | Automatic             | Environment Sync    |
+    | **Production**     | Pull to Main  | plan & apply     | Once Staging Succeeds | Controlled Release  |
 
 ---
 
@@ -88,7 +84,7 @@ The pipeline implements a **Promotion-Based Deployment** model to protect produc
 
 ### OIDC Authentication
 
-We utilize **GitHub OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the repository path: `project_path:ehermenau/edge-first-infra:*`.
+We utilize **GitHub OIDC** to authenticate with AWS without long-lived credentials. The IAM roles are strictly scoped to the path of the specified git repository.
 
 ### Cluster Access
 
