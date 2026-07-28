@@ -53,8 +53,6 @@ The project is structured into modular layers to ensure a clean separation of co
   - Route 53 internal zones
 - **EKS Infra**:
   - Kubernetes clusters with **EKS Auto Mode** for managed compute.
-- **EKS Platform**:
-  - Installs ArgoCD on the EKS cluster, using this repository as its root.
 
 ---
 
