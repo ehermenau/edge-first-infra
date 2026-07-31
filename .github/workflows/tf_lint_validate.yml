@@ -5,13 +5,18 @@ on:
     inputs:
       TF_ROOT:
         required: true
-        type: string 
+        type: string
+      ENVS:
+        description: 'JSON array of environments to matrix over (e.g. ["prod"] for a single-environment layer)'
+        required: false
+        type: string
+        default: '["staging", "prod"]'
 
 jobs:
   tf_lint_validate:
     strategy:
       matrix:
-        ENV: [staging, prod]
+        ENV: ${{ fromJson(inputs.ENVS) }}
     environment: ${{ matrix.ENV }}
     runs-on: ubuntu-latest
     defaults:

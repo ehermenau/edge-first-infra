@@ -1,0 +1,30 @@
+# The one Application applied manually (via CI, see workflow.yml) after
+# ArgoCD is installed. It watches gitops/hub/apps/ for any application.yaml
+# and applies it as a child Application - adding a new numbered folder with
+# its own application.yaml is enough to register a new app, no further
+# ArgoCD-side configuration needed.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ehermenau/edge-first-infra.git
+    targetRevision: main
+    path: gitops/hub/apps
+    directory:
+      recurse: true
+      include: "application.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

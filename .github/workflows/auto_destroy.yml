@@ -10,21 +10,47 @@ permissions:
     contents: read
 
 jobs:
+  # Prod stays up permanently and is intentionally excluded from this
+  # workflow. Only staging cycles nightly to control credit burn.
+
+  # The built-in EKS Auto Mode load balancer controller attaches a finalizer
+  # to any Ingress it manages and only releases it once the ALB it created is
+  # actually deleted. `terraform destroy` on eks-infra doesn't know about
+  # that finalizer — it just tears down the cluster, which would leave the
+  # controller no chance to clean up and orphan the ALB. This step forces
+  # the graceful delete first so eks_destroy never runs against a cluster
+  # with a live Ingress-managed ALB still attached.
+  drain_ingress_staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name efi-staging-eks-cluster
+
+      - name: Delete Ingress and wait for ALB teardown
+        run: |
+          if kubectl get ingress -n scanner fetchlabs-scanner --ignore-not-found -o name | grep -q .; then
+            kubectl delete ingress -n scanner fetchlabs-scanner --wait --timeout=120s
+          else
+            echo "no scanner Ingress found, nothing to drain"
+          fi
+
   eks_destroy:
-    strategy:
-      matrix:
-        ENV: [staging, prod]
+    needs: [drain_ingress_staging]
     uses: ./.github/workflows/tf_destroy.yml
-    with: 
+    with:
       TF_ROOT: terraform/eks-infra
-      ENV: ${{ matrix.ENV }}
+      ENV: staging
 
   vpc_destroy:
-    strategy:
-      matrix:
-        ENV: [staging, prod]
     needs: [eks_destroy]
     uses: ./.github/workflows/tf_destroy.yml
-    with: 
+    with:
       TF_ROOT: terraform/vpc-infra
-      ENV: ${{ matrix.ENV }}
+      ENV: staging

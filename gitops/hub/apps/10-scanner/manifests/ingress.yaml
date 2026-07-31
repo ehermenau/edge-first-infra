@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fetchlabs-scanner
+  namespace: scanner
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    # Traffic reaches the ALB exclusively through Cloudflare's proxy; direct
+    # internet access to the ALB is pointless without a matching Host
+    # header, but restricting the security group to Cloudflare's published
+    # ranges closes that off explicitly instead of relying on obscurity.
+    # Source: https://www.cloudflare.com/ips-v4 / ips-v6 (refresh periodically).
+    alb.ingress.kubernetes.io/inbound-cidrs: "173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32"
+    # One-time bootstrap value: scanner-infra's ACM cert is stable (never
+    # nightly-destroyed, see its providers.tf), so this only needs setting
+    # once after the first `terraform apply` — filled in from the
+    # acm_certificate_arn output.
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:624293007511:certificate/9e50a8cb-3a11-454d-a0df-9de738a89295
+spec:
+  rules:
+    - host: scan.fetchlabs.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fetchlabs-scanner
+                port:
+                  name: http

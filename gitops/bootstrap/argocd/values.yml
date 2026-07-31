@@ -1,0 +1,16 @@
+# Stock argo-cd Helm chart values, installed via a CI step (not managed by
+# Terraform) chained after eks_staging/eks_prod succeed — see workflow.yml.
+# Deliberately minimal for M1: no external Ingress/UI exposure, no custom
+# RBAC, no resource limits tuning. Hardening ArgoCD itself is out of scope
+# for the walking skeleton; it isn't reachable from outside the cluster.
+configs:
+  params:
+    server.insecure: false
+
+server:
+  service:
+    type: ClusterIP
+
+  # No public Ingress - access via `kubectl port-forward` for now.
+  ingress:
+    enabled: false

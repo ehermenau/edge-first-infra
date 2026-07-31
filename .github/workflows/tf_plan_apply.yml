@@ -25,6 +25,11 @@ jobs:
       TF_ROOT: ${{ inputs.TF_ROOT }}
       TF_VAR_admin_user_arn: ${{ vars.TF_VAR_ADMIN_USER_ARN }}
       TF_VAR_aws_role_arn: ${{ vars.AWS_ROLE_ARN }}
+      # Only consumed by terraform/scanner-infra (its cloudflare provider
+      # block and cloudflare_zone_id var); harmless no-op for every other
+      # layer. Caller must use `secrets: inherit` to populate the secret.
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
     steps:
       - uses: actions/checkout@v4
 

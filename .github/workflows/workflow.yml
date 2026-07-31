@@ -23,8 +23,9 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
       vpc-infra: ${{ steps.filter.outputs.vpc-infra }}
       eks-infra: ${{ steps.filter.outputs.eks-infra }}
+      scanner-infra: ${{ steps.filter.outputs.scanner-infra }}
     steps:
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -32,7 +33,7 @@ jobs:
         id: filter
         with:
           base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || 'main' }}
-          filters: | 
+          filters: |
             workflow:
               - '.github/workflows/workflow.yml'
               - '.github/workflows/**/*'
@@ -40,6 +41,8 @@ jobs:
               - 'terraform/vpc-infra/**/*'
             eks-infra:
               - 'terraform/eks-infra/**/*'
+            scanner-infra:
+              - 'terraform/scanner-infra/**/*'
 
   # runs on every push and PR, when changes are detected in the relevant directories, or when force_all is true
   vpc_infra_tf_lint_validate:
@@ -129,15 +132,132 @@ jobs:
 
   eks_prod:
     needs: [changes, eks_staging, vpc_prod]
-    if: | 
+    if: |
       always() &&
       (needs.changes.outputs.eks-infra == 'true' || github.event.inputs.force_all == 'true') &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main' &&
-      (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') && 
-      (needs.vpc_prod.result == 'success' || needs.vpc_prod.result == 'skipped') 
+      (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped') &&
+      (needs.vpc_prod.result == 'success' || needs.vpc_prod.result == 'skipped')
     uses: ./.github/workflows/tf_plan_apply.yml
     with:
       TF_ROOT: terraform/eks-infra
-      ENV: prod 
+      ENV: prod
       APPLY: true
+
+  # scanner-infra is single-environment (prod only, see its providers.tf for
+  # why) and independent of the vpc/eks chain above, so it doesn't need a
+  # needs: dependency on either.
+  scanner_infra_tf_lint_validate:
+    needs: changes
+    if: |
+      needs.changes.outputs.scanner-infra == 'true' ||
+      github.event.inputs.force_all == 'true'
+    uses: ./.github/workflows/tf_lint_validate.yml
+    with:
+      TF_ROOT: terraform/scanner-infra
+      ENVS: '["prod"]'
+
+  scanner_infra_plan_pr:
+    needs: [changes, scanner_infra_tf_lint_validate]
+    if: |
+      needs.changes.outputs.scanner-infra == 'true' &&
+      github.event_name == 'pull_request'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    secrets: inherit
+    with:
+      TF_ROOT: terraform/scanner-infra
+      ENV: prod
+      APPLY: false
+
+  scanner_infra_prod:
+    needs: [changes, scanner_infra_tf_lint_validate]
+    if: |
+      always() &&
+      (needs.changes.outputs.scanner-infra == 'true' || github.event.inputs.force_all == 'true') &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    secrets: inherit
+    with:
+      TF_ROOT: terraform/scanner-infra
+      ENV: prod
+      APPLY: true
+
+  # ArgoCD is installed via CI (not Terraform) chained after the cluster it
+  # targets comes up, since a manual install wouldn't survive staging's
+  # nightly destroy. Both helm upgrade --install and kubectl apply are
+  # idempotent, so re-running this against an already-bootstrapped cluster
+  # is a no-op.
+  argocd_bootstrap_staging:
+    needs: [eks_staging]
+    if: |
+      always() &&
+      needs.eks_staging.result == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+
+      - run: aws eks update-kubeconfig --region us-east-1 --name efi-staging-eks-cluster
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install ArgoCD
+        run: |
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo update
+          helm upgrade --install argocd argo/argo-cd \
+            --namespace argocd --create-namespace \
+            -f gitops/bootstrap/argocd/values.yml \
+            --wait --timeout 5m
+
+      - name: Apply root Application
+        run: kubectl apply -f gitops/hub/root/root-app.yaml
+
+  argocd_bootstrap_prod:
+    needs: [eks_prod]
+    if: |
+      always() &&
+      needs.eks_prod.result == 'success'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: "us-east-1"
+
+      - run: aws eks update-kubeconfig --region us-east-1 --name efi-prod-eks-cluster
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install ArgoCD
+        run: |
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo update
+          helm upgrade --install argocd argo/argo-cd \
+            --namespace argocd --create-namespace \
+            -f gitops/bootstrap/argocd/values.yml \
+            --wait --timeout 5m
+
+      - name: Apply root Application
+        run: kubectl apply -f gitops/hub/root/root-app.yaml
+
+      # Waits for the scanner's Ingress to get an ALB hostname (i.e. for
+      # ArgoCD to have actually synced it) and points scan.fetchlabs.io at
+      # it - see the script for why this can't be a Terraform resource.
+      - name: Sync scan.fetchlabs.io DNS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: ./scripts/sync-scanner-dns.sh
