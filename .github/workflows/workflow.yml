@@ -193,7 +193,9 @@ jobs:
     needs: [eks_staging]
     if: |
       always() &&
-      needs.eks_staging.result == 'success'
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      (needs.eks_staging.result == 'success' || needs.eks_staging.result == 'skipped')
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -225,7 +227,9 @@ jobs:
     needs: [eks_prod]
     if: |
       always() &&
-      needs.eks_prod.result == 'success'
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      (needs.eks_prod.result == 'success' || needs.eks_prod.result == 'skipped')
     runs-on: ubuntu-latest
     environment: prod
     steps:
