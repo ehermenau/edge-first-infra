@@ -15,4 +15,4 @@ resources:
 images:
   - name: scanner
     newName: 624293007511.dkr.ecr.us-east-1.amazonaws.com/fetchlabs-scanner
-    newTag: d6d9b39308db
+    newTag: f9cb2ed9bc13
