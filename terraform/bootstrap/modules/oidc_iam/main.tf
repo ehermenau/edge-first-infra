@@ -39,7 +39,9 @@ resource "aws_iam_role_policy" "github_ci_policy" {
           "iam:*",     # Needed to create EKS node roles
           "s3:*",      # Needed for state and artifacts
           "kms:*",     # Needed for encryption
-          "logs:*"     # Needed for CloudWatch logging
+          "logs:*",    # Needed for CloudWatch logging
+          "ecr:*",     # Needed for scanner-infra (ECR repo)
+          "acm:*"      # Needed for scanner-infra (ACM cert)
         ]
         Resource = "*"
         # Add a condition to restrict to your specific region

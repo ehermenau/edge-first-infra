@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fetchlabs-scanner
+  namespace: scanner
+spec:
+  podSelector:
+    matchLabels:
+      app: fetchlabs-scanner
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Traffic already passed through the Cloudflare-restricted ALB before
+    # reaching here; no further source restriction needed at the pod level.
+    - ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # DNS only. Trivy's config-scan is documented as fully static, but even
+    # with --skip-check-update/--skip-version-check it still attempts an
+    # outbound HTTPS connection (confirmed via strace during the M0 spike
+    # and again while building this image) - this NetworkPolicy, not the
+    # CLI flags, is the actual guarantee that a scan can't exfiltrate
+    # submitted IaC or reach anything else on the network.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

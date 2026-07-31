@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+
+# CI bumps this after every successful push to ECR via
+# `kustomize edit set image scanner=<repo_url>:<tag>` and commits the
+# result — see fetchlabs-scanner's ci.yml and README below.
+images:
+  - name: scanner
+    newName: 624293007511.dkr.ecr.us-east-1.amazonaws.com/fetchlabs-scanner
+    newTag: placeholder

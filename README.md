@@ -53,8 +53,6 @@ The project is structured into modular layers to ensure a clean separation of co
   - Route 53 internal zones
 - **EKS Infra**:
   - Kubernetes clusters with **EKS Auto Mode** for managed compute.
-- **EKS Platform**:
-  - Installs ArgoCD on the EKS cluster, using this repository as its root.
 
 ---
 
@@ -107,6 +105,21 @@ To interact with the EKS cluster locally after a deployment:
     ```bash
     kubectl get nodes
     ```
+
+---
+
+## 🔍 fetchlabs-scanner
+
+`scan.fetchlabs.io` — a public infrastructure security posture scanner ([`fetchlabs-scanner`](https://github.com/ehermenau/fetchlabs-scanner)) — runs on the prod EKS cluster, which is why prod no longer auto-destroys nightly (staging still does). GitOps entry point: `gitops/hub/apps/10-scanner`.
+
+**One-time setup** for a fresh environment:
+
+1. `terraform apply` `terraform/scanner-infra` (prod only — see its `providers.tf` for why this layer isn't per-environment or nightly-destroyed).
+2. Copy its `acm_certificate_arn` output into `gitops/hub/apps/10-scanner/manifests/ingress.yaml`, replacing `REPLACE_WITH_ACM_CERTIFICATE_ARN`. One-time because the cert is stable going forward.
+3. Set GitHub repo variables/secrets: `CLOUDFLARE_ZONE_ID` (var), `CLOUDFLARE_API_TOKEN` (secret, DNS-edit scope on the `fetchlabs.io` zone only) — consumed by `terraform/scanner-infra`'s apply and by `scripts/sync-scanner-dns.sh`.
+4. Push to `main`. `workflow.yml` applies `scanner-infra`, then `eks_prod` → `argocd_bootstrap_prod` installs ArgoCD, applies the app-of-apps root, and syncs `scan.fetchlabs.io`'s DNS to the ALB once the Ingress gets one.
+
+ALB provisioning note: the ALB is created dynamically by EKS Auto Mode's built-in load balancer controller from the scanner's `Ingress` (not a Terraform `aws_lb` resource). Since staging still nightly-destroys, `auto_destroy.yml` runs a `drain_ingress_staging` job that deletes the Ingress and waits for the controller's finalizer to confirm ALB teardown *before* `terraform destroy` runs on `eks-infra` — otherwise the ALB would be orphaned (no Terraform state tracks it, and the controller pods die before they can clean it up if the cluster goes first).
 
 ---
 

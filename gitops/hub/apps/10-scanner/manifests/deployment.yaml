@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fetchlabs-scanner
+  namespace: scanner
+  labels:
+    app: fetchlabs-scanner
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fetchlabs-scanner
+  template:
+    metadata:
+      labels:
+        app: fetchlabs-scanner
+      # No linkerd.io/inject annotation yet - Linkerd doesn't exist until M3.
+      # (Yes, this means our own scanner would currently fail its own
+      # FETCHLABS-ZT-002 check. That's fine: M1 doesn't run the scanner
+      # against its own manifests, and M3 closes this gap for real.)
+    spec:
+      containers:
+        - name: scanner
+          image: scanner:placeholder # replaced by CI via `kustomize edit set image`
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ALLOWED_ORIGIN
+              value: "https://fetchlabs.io"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      volumes:
+        - name: tmp
+          emptyDir: {}
