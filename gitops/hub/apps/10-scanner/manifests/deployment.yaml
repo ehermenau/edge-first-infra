@@ -39,6 +39,13 @@ spec:
               memory: 256Mi
           securityContext:
             runAsNonRoot: true
+            # distroless:nonroot sets USER nonroot (a name, not a numeric
+            # UID) in the image config. Kubernetes can't verify a named
+            # user is non-root without running the image, so runAsNonRoot
+            # alone makes it refuse to start (CreateContainerConfigError) -
+            # pinning the known UID/GID (65532) directly avoids that check.
+            runAsUser: 65532
+            runAsGroup: 65532
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:

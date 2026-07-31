@@ -6,6 +6,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  - ingressclass.yaml
   - networkpolicy.yaml
 
 # CI bumps this after every successful push to ECR via

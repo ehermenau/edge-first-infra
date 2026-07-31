@@ -18,7 +18,12 @@ spec:
     path: gitops/hub/apps
     directory:
       recurse: true
-      include: "application.yaml"
+      # "application.yaml" alone only matches files directly in `path`,
+      # NOT nested ones - confirmed empirically (root app synced
+      # successfully but never created any child Application at all, since
+      # every real application.yaml lives one level down in a numbered
+      # folder). ** is required for recurse to actually reach them.
+      include: "**/application.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
