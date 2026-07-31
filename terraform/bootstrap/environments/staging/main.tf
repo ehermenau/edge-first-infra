@@ -16,5 +16,4 @@ module "git_vars" {
   repository     = var.repository
   state_bucket   = module.s3_state.bucket_name
   aws_role_arn   = module.oidc_iam.aws_role_arn
-  admin_username = var.admin_username
 }

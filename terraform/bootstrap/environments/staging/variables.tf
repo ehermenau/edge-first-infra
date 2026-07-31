@@ -12,8 +12,3 @@ variable "github_owner" {
   type    = string
   default = "ehermenau"
 }
-
-variable "admin_username" {
-  type    = string
-  default = "Terraform-Admin"
-}

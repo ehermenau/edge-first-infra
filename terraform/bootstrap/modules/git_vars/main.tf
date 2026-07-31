@@ -17,8 +17,9 @@ resource "github_actions_environment_variable" "aws_role_arn" {
   value         = var.aws_role_arn
 }
 
-resource "github_actions_variable" "admin_user_arn" {
-  repository    = var.repository
-  variable_name = "TF_VAR_admin_user_arn"
-  value         = data.aws_iam_user.admin.arn
-}
+# admin_user_arn (TF_VAR_admin_user_arn) is intentionally NOT here: it's a
+# repo-level GitHub variable, not environment-scoped, but this module is
+# instantiated once per environment - two independent Terraform states both
+# trying to own the same repo-level resource caused a real "already exists"
+# conflict on prod's apply. It lives in terraform/bootstrap/global instead,
+# applied once.
