@@ -29,7 +29,11 @@ spec:
             - name: PORT
               value: "8080"
             - name: ALLOWED_ORIGIN
-              value: "https://fetchlabs.io"
+              # fetchlabs.io 308-redirects to www.fetchlabs.io (Vercel's
+              # default apex->www redirect, confirmed via curl) before any
+              # JS runs, so www is the only origin that will ever actually
+              # call this API - the apex will never serve a page itself.
+              value: "https://www.fetchlabs.io"
           resources:
             requests:
               cpu: 100m
