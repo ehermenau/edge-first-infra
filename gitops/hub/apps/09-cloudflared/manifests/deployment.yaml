@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared-argocd
+  namespace: argocd
+  labels:
+    app: cloudflared-argocd
+spec:
+  # cloudflared's HA model: multiple replicas presenting the same
+  # TUNNEL_TOKEN just become redundant connections to one tunnel - free HA,
+  # no extra Cloudflare-side config needed (unlike the scanner, which needs
+  # its own Service/Ingress fan-out).
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudflared-argocd
+  template:
+    metadata:
+      labels:
+        app: cloudflared-argocd
+    spec:
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.7.3
+          args:
+            - tunnel
+            - --metrics
+            - 0.0.0.0:2000
+            - run
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  # Created by the argocd_bootstrap_prod CI job from
+                  # terraform/argocd-access's tunnel_token output - not
+                  # committed to git. This Deployment CrashLoops until that
+                  # step has run once against a given cluster.
+                  name: cloudflared-token
+                  key: token
+          ports:
+            - containerPort: 2000
+              name: metrics
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            # Image already runs as UID/GID 65532 (confirmed via `docker
+            # inspect`) - pinning it explicitly for the same reason as the
+            # scanner Deployment: Kubernetes can't verify a named non-root
+            # user without running the image first.
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: home
+              mountPath: /home/nonroot
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: metrics
+            initialDelaySeconds: 3
+            periodSeconds: 10
+      volumes:
+        - name: home
+          emptyDir: {}

@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflared-argocd
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ehermenau/edge-first-infra.git
+    targetRevision: main
+    path: gitops/hub/apps/09-cloudflared/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    # No CreateNamespace=true here (unlike 10-scanner): the argocd namespace
+    # already exists from the Helm install in workflow.yml, and the
+    # cloudflared-token Secret it depends on is created there by that same
+    # CI job before this Application's first sync.
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -25,11 +25,15 @@ jobs:
       TF_ROOT: ${{ inputs.TF_ROOT }}
       TF_VAR_admin_user_arn: ${{ vars.TF_VAR_ADMIN_USER_ARN }}
       TF_VAR_aws_role_arn: ${{ vars.AWS_ROLE_ARN }}
-      # Only consumed by terraform/scanner-infra (its cloudflare provider
-      # block and cloudflare_zone_id var); harmless no-op for every other
+      # Only consumed by terraform/scanner-infra and terraform/argocd-access
+      # (their cloudflare provider blocks); harmless no-op for every other
       # layer. Caller must use `secrets: inherit` to populate the secret.
+      # CLOUDFLARE_ACCOUNT_ID is set on the prod environment only (like
+      # CLOUDFLARE_API_TOKEN) since it's only ever needed there - resolves
+      # to empty for staging jobs, which is fine as nothing there reads it.
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_zone_id: ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_cloudflare_account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
 
