@@ -18,8 +18,11 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
-variable "owner_email" {
-  description = "The only identity allowed through Cloudflare Access to the ArgoCD UI"
-  type        = string
-  default     = "hermenau.evan@gmail.com"
+variable "allowed_emails" {
+  description = "Identities allowed through Cloudflare Access to the ArgoCD UI"
+  type        = list(string)
+  default = [
+    "hermenau.evan@gmail.com",
+    "admin@fetchlabs.io",
+  ]
 }
