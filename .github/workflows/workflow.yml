@@ -24,6 +24,7 @@ jobs:
       vpc-infra: ${{ steps.filter.outputs.vpc-infra }}
       eks-infra: ${{ steps.filter.outputs.eks-infra }}
       scanner-infra: ${{ steps.filter.outputs.scanner-infra }}
+      argocd-access: ${{ steps.filter.outputs.argocd-access }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,6 +44,8 @@ jobs:
               - 'terraform/eks-infra/**/*'
             scanner-infra:
               - 'terraform/scanner-infra/**/*'
+            argocd-access:
+              - 'terraform/argocd-access/**/*'
 
   # runs on every push and PR, when changes are detected in the relevant directories, or when force_all is true
   vpc_infra_tf_lint_validate:
@@ -184,6 +187,45 @@ jobs:
       ENV: prod
       APPLY: true
 
+  # argocd-access is single-environment (prod only, same rationale as
+  # scanner-infra) and Cloudflare-only (no AWS resources), independent of
+  # the vpc/eks chain above.
+  argocd_access_tf_lint_validate:
+    needs: changes
+    if: |
+      needs.changes.outputs.argocd-access == 'true' ||
+      github.event.inputs.force_all == 'true'
+    uses: ./.github/workflows/tf_lint_validate.yml
+    with:
+      TF_ROOT: terraform/argocd-access
+      ENVS: '["prod"]'
+
+  argocd_access_plan_pr:
+    needs: [changes, argocd_access_tf_lint_validate]
+    if: |
+      needs.changes.outputs.argocd-access == 'true' &&
+      github.event_name == 'pull_request'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    secrets: inherit
+    with:
+      TF_ROOT: terraform/argocd-access
+      ENV: prod
+      APPLY: false
+
+  argocd_access_prod:
+    needs: [changes, argocd_access_tf_lint_validate]
+    if: |
+      always() &&
+      (needs.changes.outputs.argocd-access == 'true' || github.event.inputs.force_all == 'true') &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/tf_plan_apply.yml
+    secrets: inherit
+    with:
+      TF_ROOT: terraform/argocd-access
+      ENV: prod
+      APPLY: true
+
   # ArgoCD is installed via CI (not Terraform) chained after the cluster it
   # targets comes up, since a manual install wouldn't survive staging's
   # nightly destroy. Both helm upgrade --install and kubectl apply are
@@ -224,12 +266,13 @@ jobs:
         run: kubectl apply -f gitops/hub/root/root-app.yaml
 
   argocd_bootstrap_prod:
-    needs: [eks_prod]
+    needs: [eks_prod, argocd_access_prod]
     if: |
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main' &&
-      (needs.eks_prod.result == 'success' || needs.eks_prod.result == 'skipped')
+      (needs.eks_prod.result == 'success' || needs.eks_prod.result == 'skipped') &&
+      (needs.argocd_access_prod.result == 'success' || needs.argocd_access_prod.result == 'skipped')
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -244,6 +287,7 @@ jobs:
       - run: aws eks update-kubeconfig --region us-east-1 --name efi-prod-eks-cluster
 
       - uses: azure/setup-helm@v4
+      - uses: hashicorp/setup-terraform@v3
 
       - name: Install ArgoCD
         run: |
@@ -253,6 +297,19 @@ jobs:
             --namespace argocd --create-namespace \
             -f gitops/bootstrap/argocd/values.yml \
             --wait --timeout 5m
+
+      # cloudflared (gitops/hub/apps/09-cloudflared) reads its TUNNEL_TOKEN
+      # from this Secret. Sourced from argocd-access's already-applied state
+      # rather than re-running terraform apply here - argocd_access_prod
+      # (a needs: dependency above) owns the actual apply.
+      - name: Sync cloudflared tunnel token
+        run: |
+          cd terraform/argocd-access/environments/prod
+          terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+          TOKEN=$(terraform output -raw tunnel_token)
+          kubectl create secret generic cloudflared-token -n argocd \
+            --from-literal=token="$TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply root Application
         run: kubectl apply -f gitops/hub/root/root-app.yaml

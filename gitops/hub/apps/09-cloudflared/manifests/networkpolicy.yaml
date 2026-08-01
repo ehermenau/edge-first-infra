@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudflared-argocd
+  namespace: argocd
+spec:
+  podSelector:
+    matchLabels:
+      app: cloudflared-argocd
+  policyTypes:
+    # Egress only: cloudflared makes outbound connections to the Cloudflare
+    # edge and to argocd-server, it never accepts inbound traffic. Kubelet's
+    # liveness/readiness probes hit the pod IP directly and bypass
+    # NetworkPolicy entirely, so no Ingress rule is needed for them either.
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd-server
+      ports:
+        - protocol: TCP
+          port: 443
+    - ports:
+        # Cloudflare edge - no stable CIDR list to pin further without
+        # extra maintenance burden, same tradeoff already accepted
+        # elsewhere in this cluster for provider-edge egress.
+        - protocol: TCP
+          port: 443

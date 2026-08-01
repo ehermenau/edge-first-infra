@@ -11,6 +11,9 @@ server:
   service:
     type: ClusterIP
 
-  # No public Ingress - access via `kubectl port-forward` for now.
+  # No K8s Ingress - reached via a Cloudflare Tunnel instead
+  # (gitops/hub/apps/09-cloudflared), which talks to this ClusterIP Service
+  # directly and puts Cloudflare Access in front as the actual auth
+  # boundary. `kubectl port-forward` still works as a fallback.
   ingress:
     enabled: false
