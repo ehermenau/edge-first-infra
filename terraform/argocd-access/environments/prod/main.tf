@@ -44,7 +44,25 @@ resource "cloudflare_dns_record" "argocd" {
 }
 
 # --- Access: gates the tunnel hostname to one identity, via Cloudflare's
-# built-in one-time-PIN login (no IdP setup needed for a single-owner app) ---
+# built-in one-time-PIN login (no custom IdP setup needed for a single-owner
+# app) ---
+
+# As of a June 2026 Cloudflare change, newly-enabled Zero Trust accounts
+# default to the built-in "Cloudflare" identity provider (login with your
+# Cloudflare.com account) rather than One-Time PIN - confirmed the hard way
+# when that IdP authenticated as the wrong email and Access correctly denied
+# it. One-Time PIN has to be added manually (Zero Trust > Integrations >
+# Identity providers > Add new > One-time PIN) before this lookup succeeds.
+data "cloudflare_zero_trust_access_identity_providers" "all" {
+  account_id = var.cloudflare_account_id
+}
+
+locals {
+  onetimepin_idp_id = one([
+    for idp in data.cloudflare_zero_trust_access_identity_providers.all.result :
+    idp.id if idp.type == "onetimepin"
+  ])
+}
 
 resource "cloudflare_zero_trust_access_application" "argocd" {
   account_id       = var.cloudflare_account_id
@@ -52,6 +70,10 @@ resource "cloudflare_zero_trust_access_application" "argocd" {
   domain           = "${var.subdomain}.${var.root_domain}"
   type             = "self_hosted"
   session_duration = "24h"
+  # Restricts login to One-Time PIN only, so the "Cloudflare" IdP - which
+  # authenticates as whoever's logged into Cloudflare, not necessarily
+  # owner_email - never shows up as a login option on this application.
+  allowed_idps = [local.onetimepin_idp_id]
 
   policies = [{
     name       = "Owner only"
