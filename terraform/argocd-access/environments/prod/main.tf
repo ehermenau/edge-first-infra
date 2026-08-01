@@ -71,17 +71,16 @@ resource "cloudflare_zero_trust_access_application" "argocd" {
   type             = "self_hosted"
   session_duration = "24h"
   # Restricts login to One-Time PIN only, so the "Cloudflare" IdP - which
-  # authenticates as whoever's logged into Cloudflare, not necessarily
-  # owner_email - never shows up as a login option on this application.
+  # authenticates as whoever's logged into Cloudflare, not necessarily one
+  # of allowed_emails - never shows up as a login option on this application.
   allowed_idps = [local.onetimepin_idp_id]
 
   policies = [{
-    name       = "Owner only"
+    name       = "Allowed emails"
     decision   = "allow"
     precedence = 1
-    include = [{
-      email = { email = var.owner_email }
-    }]
+    # OR'd together - matching any one of these emails is sufficient.
+    include = [for email in var.allowed_emails : { email = { email = email } }]
   }]
 }
 

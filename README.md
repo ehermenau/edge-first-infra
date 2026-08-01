@@ -125,7 +125,7 @@ ALB provisioning note: the ALB is created dynamically by EKS Auto Mode's built-i
 
 ## 🔐 ArgoCD UI access (`argocd.fetchlabs.io`)
 
-ArgoCD's UI has no K8s Ingress and isn't reachable via a `LoadBalancer`/ALB at all — it's fronted by a **Cloudflare Tunnel**, with **Cloudflare Access** gating the hostname to one identity (Evan's email, one-time-PIN login). `cloudflared` makes an outbound-only connection from inside the cluster, so there's no inbound port, security group rule, or ALB for this at all. GitOps entry point: `gitops/hub/apps/09-cloudflared`. Prod only — staging nightly-destroys and persistent access there isn't worth the churn; use `kubectl port-forward svc/argocd-server -n argocd 8080:443` there instead.
+ArgoCD's UI has no K8s Ingress and isn't reachable via a `LoadBalancer`/ALB at all — it's fronted by a **Cloudflare Tunnel**, with **Cloudflare Access** gating the hostname to a short allowlist of emails (`terraform/argocd-access`'s `allowed_emails` variable, one-time-PIN login). `cloudflared` makes an outbound-only connection from inside the cluster, so there's no inbound port, security group rule, or ALB for this at all. GitOps entry point: `gitops/hub/apps/09-cloudflared`. Prod only — staging nightly-destroys and persistent access there isn't worth the churn; use `kubectl port-forward svc/argocd-server -n argocd 8080:443` there instead.
 
 **One-time setup** for a fresh environment (do these *before* the first push that touches `terraform/argocd-access`, or its `terraform apply` will fail):
 
@@ -134,7 +134,7 @@ ArgoCD's UI has no K8s Ingress and isn't reachable via a `LoadBalancer`/ALB at a
    - Account → Access: Apps and Policies → Edit
 2. Set `CLOUDFLARE_ACCOUNT_ID` as a **`prod` environment variable** (not repo-level) — `gh variable set CLOUDFLARE_ACCOUNT_ID --env prod --body <id>`, or Settings → Environments → prod → Variables. Scoped like `CLOUDFLARE_API_TOKEN` (also prod-only), not like `CLOUDFLARE_ZONE_ID` (repo-level today, mostly historical - it's only actually needed by prod-only layers too). Find the account ID via the Cloudflare dashboard sidebar on any zone overview, or `cloudflare accounts list` via the `cloudflare` CLI.
 3. Push to `main`. `workflow.yml` applies `terraform/argocd-access` (creates the Tunnel, DNS record, and Access application), then `argocd_bootstrap_prod` creates the `cloudflared-token` Secret from its output and applies the app-of-apps root, which syncs `gitops/hub/apps/09-cloudflared`.
-4. Browse to `https://argocd.fetchlabs.io` — Cloudflare Access sends a one-time PIN to `hermenau.evan@gmail.com`. No IdP setup required.
+4. Browse to `https://argocd.fetchlabs.io` — Cloudflare Access sends a one-time PIN to whichever address in `allowed_emails` you sign in with. Login method is restricted to One-Time PIN only (added manually once, Zero Trust → Integrations → Identity providers → Add new → One-time PIN) — no other IdP setup required.
 
 ---
 
