@@ -10,8 +10,6 @@
 
 **Edge-First Infrastructure (EFI)** provisions the AWS platform — VPC, an EKS Auto Mode cluster (staging + prod), OIDC-authenticated CI/CD, and GitOps via ArgoCD — behind two live services: the public [fetchlabs-scanner](https://github.com/ehermenau/fetchlabs-scanner) IaC security tool (`scan.fetchlabs.io`) and Cloudflare Zero Trust-gated admin access to ArgoCD itself (`argocd.fetchlabs.io`).
 
-The project's original scope was broader — a two-tier reference architecture with a central Hub plus Crossplane-provisioned edge/spoke clusters running Cilium and Longhorn. That tier was never built; there's no Crossplane, no spoke VPCs, no edge node pool anywhere in this repo. What's actually here is the Hub only, deliberately kept to a single region and re-provisionable end to end from `git push` — staging auto-destroys nightly (`auto_destroy.yml`), so nothing outside Terraform/GitOps state survives.
-
 <details>
 <summary>View Architecture Diagram</summary>
 
