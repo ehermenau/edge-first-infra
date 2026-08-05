@@ -8,7 +8,9 @@
 
 ## 📌 Overview
 
-**Edge-First Infrastructure (EFI)** is a reference architecture for geographically distributed workloads. It addresses the trade-offs between centralized cloud management and low-latency edge execution. Compute should reside where the data is born. Control should reside where the humans are.
+**Edge-First Infrastructure (EFI)** provisions the AWS platform — VPC, an EKS Auto Mode cluster (staging + prod), OIDC-authenticated CI/CD, and GitOps via ArgoCD — behind two live services: the public [fetchlabs-scanner](https://github.com/ehermenau/fetchlabs-scanner) IaC security tool (`scan.fetchlabs.io`) and Cloudflare Zero Trust-gated admin access to ArgoCD itself (`argocd.fetchlabs.io`).
+
+The project's original scope was broader — a two-tier reference architecture with a central Hub plus Crossplane-provisioned edge/spoke clusters running Cilium and Longhorn. That tier was never built; there's no Crossplane, no spoke VPCs, no edge node pool anywhere in this repo. What's actually here is the Hub only, deliberately kept to a single region and re-provisionable end to end from `git push` — staging auto-destroys nightly (`auto_destroy.yml`), so nothing outside Terraform/GitOps state survives.
 
 <details>
 <summary>View Architecture Diagram</summary>
@@ -19,40 +21,37 @@ graph TB
     subgraph "Bootstrap"
         direction LR
         A[S3 Backend]
-        B[IAM Role - Github Deployer]
-        J["GitHub Variables"]
+        B[OIDC IAM Role - GitHub Deployer]
+        J["GitHub Variables / Environments"]
     end
 
-    subgraph " "
-        B --> C[Hub VPC]
-        C --> D[EKS Cluster]
-        D --> E[ArgoCD]
-        E --> H[Crossplane]
+    subgraph "Hub (staging + prod)"
+        B --> C[VPC]
+        C --> D[EKS Auto Mode Cluster]
+        D --> E[ArgoCD - app of apps]
     end
 
-    subgraph " "
-        H -->|Provisions| I[Spoke VPC]
-        I -.->|Connected via| C
+    subgraph "GitOps apps (prod only)"
+        E --> F[fetchlabs-scanner]
+        E --> G[cloudflared]
     end
 
+    F -.->|scan.fetchlabs.io| K((public))
+    G -.->|argocd.fetchlabs.io via Cloudflare Access| L((admin only))
 ```
 
 </details>
 
 ## 🏗 Architecture
 
-The project is structured into modular layers to ensure a clean separation of concerns between core networking and compute resources.
+The project is structured into modular Terraform layers, each with its own state and CI plan/apply gating (see Workflow Structure below), plus one GitOps app-of-apps for everything that runs on the cluster.
 
-- **Bootstrap**: Initialized separately to manage:
-  - S3 backend buckets
-  - OIDC IAM roles
-  - Github Actions Variables
-  - Github Environments
-- **VPC Infra**:
-  - Multi-AZ networking
-  - Route 53 internal zones
-- **EKS Infra**:
-  - Kubernetes clusters with **EKS Auto Mode** for managed compute.
+- **Bootstrap** (`terraform/bootstrap`): S3 backend buckets, OIDC IAM roles, GitHub Actions Variables/Environments. Applied once, separately from everything else.
+- **VPC Infra** (`terraform/vpc-infra`): Multi-AZ networking, Route 53 internal zones. Per environment (staging, prod).
+- **EKS Infra** (`terraform/eks-infra`): One **EKS Auto Mode** cluster per environment — no separate managed-node-group tier, no edge nodes.
+- **Scanner Infra** (`terraform/scanner-infra`): ECR, ALB/ACM, and DNS for the scanner service. Prod only — see the `fetchlabs-scanner` section below.
+- **ArgoCD Access** (`terraform/argocd-access`): Cloudflare Tunnel + Access in front of the ArgoCD UI. Prod only — see the ArgoCD UI access section below.
+- **GitOps** (`gitops/hub`): ArgoCD app-of-apps (`gitops/hub/root`) that watches `gitops/hub/apps/**/application.yaml` — a new numbered folder there is enough to register a new app, no ArgoCD-side config needed.
 
 ---
 
@@ -160,6 +159,10 @@ ArgoCD's UI has no K8s Ingress and isn't reachable via a `LoadBalancer`/ALB at a
 #### Consequences:
 
 > Reduced operational overhead for the Hub; increased complexity for Edge maintenance is accepted to satisfy security and latency requirements.
+
+#### Amendment (2026-08-05):
+
+> The Edge tier described above was never implemented — no Managed Node Groups, Cilium, or Longhorn exist anywhere in this repo. In practice the project stayed scoped to the Hub: one EKS Auto Mode cluster per environment (staging, prod), nothing else. This amendment records that descope rather than rewriting the original decision — the Hub-only result is what's currently deployed and demoable.
 
 ---
 
